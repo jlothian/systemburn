@@ -1,0 +1,35 @@
+\subsection{Threads}
+
+To generate parallelism on the node level PThreads are used. This allows
+for a very light weight way to to bind a load module or a set of load
+modules to a specific CPU set or even a specific CPU. SystemBurn generates
+three different types of threads:
+
+\begin{description}
+
+	\item[Scheduler Thread] A single scheduler thread is spawned
+	per node. This thread reads the load file and distributes the
+	different load modules to the worker threads. The scheduler
+	thread also assigns the worker threads to the proper CPU cores
+	according to user input from the load file. This thread is also
+	responsible for communication with other nodes through MPI calls
+	including the communication test load.
+
+	\item[Monitor Thread] A single monitor thread is spawned per
+	node. On systems with newer kernels, this thread is in charge
+	of collecting temperatures from all of the CPUs on the node
+	and updating a thermal state structure which is referenced by
+	the scheduler thread. If the monitor thread notes a temperature
+	which exceeds the configured maximum, it can "declare" a thermal
+	emergency and re-assign the worker threads to a "sleep" load.
+
+	\item[Worker Thread] Worker threads are spawned to execute the
+	different load modules specified by the load file. The number
+	of worker threads that are able to be spawned is limited by the
+	\verb!MAX_WORKER_THREADS! value in the configuration file. If
+	the load file specifies more load modules than available worker
+	threads, then only the first load modules up to the maximum
+	number of worker threads are loaded. The rest of the modules
+	are discarded.
+
+\end{description}

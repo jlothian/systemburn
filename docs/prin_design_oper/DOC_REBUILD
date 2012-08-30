@@ -1,0 +1,14 @@
+# first clean up
+rm -f *.aux *.bbl *.blg *.lof *.log *.lot *.out *.pdf *.toc
+
+# format whitepaper
+pdflatex SYSTEMBURN_wp
+bibtex   SYSTEMBURN_wp
+pdflatex SYSTEMBURN_wp
+pdflatex SYSTEMBURN_wp
+
+# format ORNL TechNote
+pdflatex SYSTEMBURN_ornltm
+bibtex   SYSTEMBURN_ornltm
+pdflatex SYSTEMBURN_ornltm
+pdflatex SYSTEMBURN_ornltm

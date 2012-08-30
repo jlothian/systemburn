@@ -1,0 +1,35 @@
+\subsection{Modules}
+
+SystemBurn is designed to run several different modules, or plans, simultaneously. These modules all do different types of calculations and stress different areas of the architecture. The user is able
+to load new modules at any time so as to fine tune the load. The modules which are included in this release of SystemBurn are: 
+\begin{description}
+	\item[DGEMM size] A double precision matrix multiplication benchmark which will run to consume ``size'' bytes of memory.
+	\item[RDGEMM size] A double precision rectangular matrix multiplication benchmark which will run to consume ``size'' bytes of memory.
+	\item[LSTREAM size] Streaming integer vector operations run to consume ``size'' bytes of memory.
+	\item[DSTREAM size] Streaming double precision floating point vector operations run to consume ``size'' bytes of memory.
+	\item[LSTRIDE size] An integer load which accesses memory with changing stride, using ``size'' bytes of memory.
+	\item[DSTRIDE size] A double precision floating point load which accesses memory with changing stride, using ``size'' bytes of memory.
+	\item[FFT1D size] A 1 dimensional complex fast Fourier transform in a memory footprint of ``size'' bytes.
+	\item[FFT2D size] A 2 dimensional complex fast Fourier transform in a memory footprint of ``size'' bytes.
+	\item[GUPS size] Giga Updates Per Second - a random memory access benchmark on a table of ``size'' bytes. Note that ``size'' must be a power of 2, if it is not, it will be adjusted to the largest
+	power of 2 which will fit within ``size'' bytes.
+	\item[PV1 size]  A power hungry streaming computational algorithm on four arrays of 64bit values, which will operate with a memory footprint of ``size' bytes.
+	\item[PV2 size]  A power hungry streaming computational algorithm on one array of 64bit values, which will operate with a memory footprint of ``size'' bytes. This load was tuned to a quadcore Intel
+			``Nehalem'' processor, but may be suitable for loading multiple x86-64 cores until the memory system is saturated. It is intended to be run with a footprint large enough to require main
+	                memory access.
+	\item[PV3 size]  A power hungry streaming computational algorithm on one array of 64bit values, which will operate with a memory footprint of ``size'' bytes. This load was tuned to a quadcore AMD
+		        ``Instabul'' processor, but may be suitable for loading multiple x86-64 cores until the memory system is saturated. It is intended to be run with a footprint large enough to require main
+			memory access.
+	\item[PV4 size]  A power hungry streaming computational algorithm on one array of 64bit values. It is intended to run in a smaller memory footprint which will be contained in L2 cache, not
+	inducing main memory traffic. 
+	\item[CBA size]  A bit-twiddling load which will run within ``size'' bytes of memory.
+	\item[TILT niter]  A bit-twiddling load with a small memory footprint, ``niter'' iterations at a time.
+	\item[DCUBLAS device count threads] A CUDA double precision load for GPUs. The load is sized automatically to memory available on the GPU. The GPU ``device'' number, the ``count''
+	of iterations per pass, and the number of GPU ``threads'' to be used, may optionally be specified.  The defaults are device 0, count 8, and a thread count appropriate to the device hardware.
+	\item[SCUBLAS device count threads] A CUDA single precision load for GPUs. The load is sized automatically to memory available on the GPU. The GPU ``device'' number, the ``count''
+	of iterations per pass, and the number of GPU ``threads'' to be used, may optionally be specified.  The defaults are device 0, count 8, and a thread count appropriate to the device hardware.
+	\item[WRITE megabytes string] A I/O load which writes ``megabytes'' to files with ``string'' as the basename (this can be a path).
+	\item[SLEEP N] Puts a thread to sleep for N seconds at a time. 
+\end{description}
+
+Note: in most places a size in bytes is requested, the integer may have K, M, G, or T appended to indicate kilo, mega, giga, tera, (power of 2 based).

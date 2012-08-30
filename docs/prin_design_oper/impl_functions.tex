@@ -1,0 +1,82 @@
+\subsection{Functions}
+
+\begin{itemize}
+	\item initialization.c
+	\begin{description}
+		\item [int initialize] Primary initialization phase for the SystemBurn benchmark. This function opens several input files and an output log, using the inputs information to set the program's global variables.
+		\item [int setLogName] Handles the details of assigning a log file name obtained from the command line to a variable for later use.
+		\item [int setLoadNames] Stores the names and paths of the load files in an array of strings. 
+		\item [void freeLoadNames] Frees the memory associated with the names of the loads.
+		\item [int setVerbosity] Sets a global flag variable, dependent on the -v command line option, to determine what information is printed to the terminal during a run.
+		\item [void printHelpText] Prints help information to the terminal when the -h option is given on the command line.
+		\item [int bcastConfig] Performs a one-time broadcast of global configuration data to all MPI processes. 
+		\item [int initConfigOptions] Opens the configuration file and assigns the values in it to global variables. 
+		\item [int parseConfigFile] Parses the configuration file. 
+	\end{description}
+	\item load.c
+	\begin{description}
+		\item [int bcastLoad] Broadcasts a single load assignment to each MPI process.
+		\item [int initLoadOptions] Opens a single load file to be parsed.
+		\item [void printLoad] Prints the current load information to the terminal.
+		\item [void printSchedule] Prints the name of the input affinity schedule enum value to the terminal.
+		\item [void freePlan] Frees memory allocated within a LoadPlan structure.
+		\item [void freeSubLoad] Frees memory allocated to a SubLoad structure.
+		\item [void freeLoad] Frees all memory that was dynamically allocated to a load structure.
+		\item [schedules setSchedule] Takes an affinity schedule name as a string and returns the enum value.
+		\item [int parseLoad] Parses the load file.
+		\item [keyword keywordCmp] Accepts a character string input and returns the associated load file keyword.
+		\item [int runtimeLine] Parses a single load file line headed by the keyword \verb!RUNTIME!.
+		\item [int scheduleLine] Parses a single load file line headed by the keyword \verb!SCHEDULE!.
+		\item [int subloadLine] Parses a single load file line headed by the keyword \verb!SUBLOAD!.
+		\item [int allocSubload] Allocates memory to store a single sub-load.
+		\item [int planLine] Parses a single load file line headed by the keyword \verb!PLAN! and populates a loadplan structure with the data.
+		\item [assignPlan] Inserts a populated plan structure into the currently active sub-load structure.
+		\item [int maskLine] Parses a load file line headed by the keyword \verb!MASK!.
+		\item [int assignMask] Inserts a CPU set into the active sub-load structure.
+		\item [int assignSubLoad] Assigns the active sub-load structure to a load structure.
+		\item [LoadPlan * planCopy] Accepts a loadplan structure, produces a copy and returns a pointer to the new copy of the loadplan.
+		\item [int sumArr] Adds the integer members of an array and returns the sum.
+		\item [plan\_choice setPlan] Takes a plan name in string form and returns the enum value.
+		\item [char * printPlan] Takes a plan enum value and prints the name to terminal.
+	\end{description}
+	\item monitor.c
+	\begin{description}
+		\item [void CheckTemperatureRange] Checks the temperatures of the system. Currently this function is only set to work with Linux systems with ACPI * enabled. 
+		\item [void CheckTemperatureRange] Checks the range for the temperature readings. 
+		\item [void EmergencyStop] Kills everything immediately to preserve the system. This function is called if the system state exceeds the operating parameters.
+		\item [void * MonitorThread] Sleeps in a loop periodically waking up to check the state of its node. Will periodically output a state description. 
+		\item [void StartMonitorThread] Starts the monitor thread.
+		\item [void printTemp] Prints the current state of the minimum, mean, and maximum temperature values for the entire system.
+		\item [void reduceTemps] Gathers temperature data from every MPI process and calculates the minimum, mean, and maximum temperatures among all nodes.
+	\end{description}
+	\item schedule.c
+	\begin{description}
+		\item [int WorkerSched] Assigns modules to individual worker threads as dictated by the load file. 
+		\item [void MaskBlock] Sets the affinity mask for the CPU sets in a block type fashion. 
+		\item [void MaskRoundRobin] Sets the affinity mask for the CPU sets in a round-robin fashion.
+		\item [void MaskSpecific] Sets the affinity mask from each individual sub-load's CPU set, as specified by the user.
+		\item [void ZeroMask] Initializes the affinity masks for each thread.
+		\item [void SetMask] Sets the mask for the CPU sets based on the selected option in the load file. 
+	\end{description}
+	\item systemburn.c
+	\begin{description}
+		\item [int main] Main function for the SystemBurn benchmark. 
+	\end{description}
+	\item utility.c
+	\begin{description}
+		\item [void EmitLog] Prints different messages to the screen with time stamps as well as information about the tread calling the function, i.e. what type of thread, what thread ID number and MPI process.   
+		\item [void EmitLog3] Same as EmitLog but with the ability to print more information to the screen if needed. 
+	\end{description}
+	\item worker.c
+	\begin{description}
+		\item [int InitPlan] Sets a worker threads pointer to the \verb!fptr_initplan! function of its current plan. This allocates memory for the current plan to run.  
+		\item [int runPlan] Sets a worker threads pointer to the \verb!fptr_execplan! function of its current plan. This executes the plan.
+		\item [void * killPlan] Sets a worker threads pointer to the \verb!fptr_killplan! function of its current plan. This cleans up the memory used by the current plan in preparation for a new plan. 
+		\item [void StartWorkerThreads] Sets up affinity masks for CPU sets. Spawns worker threads and starts them with sleep plan. 
+		\item [void StopWorkerThreads] Tells all of the worker threads to finish in preparation for ending the SystemBurn benchmark.
+		\item [void * WorkerThread] Continuously checks to see if a new plan has been issued by the scheduler to the worker threads. If a new plan is issued the old plan is cleaned up and the new plan is initialized and executed. This function also collects flags from initialization and execution of plans.
+		\item [void initWorkerFlags] Initializes the workers flag counters to zero. 
+		\item [void reduceFlags] MPI Reduces all of the flag arrays to the ROOT MPI process. 
+		\item [void printFlags] Prints updates on the current flag counts across the system to the terminal. 
+	\end{description}
+\end{itemize}

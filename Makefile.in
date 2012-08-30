@@ -1,0 +1,75 @@
+
+# Set these values for your system
+CC      = @CONFIG_CC@
+MPICC   = @CONFIG_MPICC@
+CFLAGS  = @CONFIG_CFLAGS@
+LDFLAGS = @CONFIG_LDFLAGS@
+LIBS    = @CONFIG_LIBS@
+DEPC	= @DEPC_PATH@
+
+# Paths to the include, source, plan, and build directories...
+ABSOLUTE_PATH = @CONFIG_PROJECT_DIR@
+SRC_DIR  = src
+PLAN_DIR  = planlib
+BUILD_DIR = build
+TEST_DIR  = tests
+# Set VPATH to search these directories for .c files
+VPATH = $(SRC_DIR):$(PLAN_DIR)
+
+# whether or not to compile DGEMM or FFTW modules
+ENABLE_BLAS = @ENABLE_BLAS@
+ENABLE_FFTW = @ENABLE_FFTW@
+ENABLE_CUDA = @ENABLE_CUDA@
+
+# Search paths for the header files
+INCLUDES = -I$(SRC_DIR) -I$(PLAN_DIR) -I.
+
+# Include makefile modules
+include $(SRC_DIR)/module.mk
+include $(PLAN_DIR)/module.mk
+ALL_SRC := $(SRC_SRC) $(PLAN_SRC)
+
+# objects to build
+SRC_OBJS := $(patsubst $(SRC_DIR)/%.c, $(BUILD_DIR)/%.o, $(filter %.c, $(SRC_SRC)))
+PLAN_OBJS := $(patsubst $(PLAN_DIR)/%.c, $(BUILD_DIR)/%.o, $(filter %.c, $(PLAN_SRC)))
+ALL_OBJS := $(SRC_OBJS) $(PLAN_OBJS)
+
+# code dependencies to generate
+SRC_DEPS := $(patsubst $(SRC_DIR)/%.c, $(BUILD_DIR)/%.d, $(filter %.c, $(SRC_SRC)))
+PLAN_DEPS := $(patsubst $(PLAN_DIR)/%.c, $(BUILD_DIR)/%.d, $(filter %.c, $(PLAN_SRC)))
+ALL_DEPS := $(SRC_DEPS) $(PLAN_DEPS)
+MAKEDEP := $(DEPC) -MM
+
+
+# Build rules
+.DEFAULT: all
+all: systemburn
+systemburn: build_dir $(ALL_OBJS)
+	$(MPICC) $(CFLAGS) $(INCLUDES) $(LDFLAGS) $(LIBS) -o systemburn $(ALL_OBJS) 
+build_dir:
+	mkdir -p $(BUILD_DIR)
+$(BUILD_DIR)/%.o: %.c
+	$(MPICC) $(CFLAGS) $(INCLUDES) -c $< -o $@
+$(BUILD_DIR)/%.d: %.c
+	@echo "Generating dependencies for $< (output in $@)"
+	@mkdir -p $(BUILD_DIR)
+	@# call 'gcc -MM %.c', then add the build dir and %.d to the left side of the colon
+	@$(MAKEDEP) $(INCLUDES) $< | sed 's@^\(.*\)\.o:@$(BUILD_DIR)/\1.d $(BUILD_DIR)/\1.o:@g' > $@
+
+# Include dependencies for build commands
+ifeq ($(strip $(filter %clean %clobber, $(MAKECMDGOALS)) ),)
+-include $(ALL_DEPS)
+endif
+
+# Other options
+depclean:
+	rm -f build/*.d
+clean: depclean
+	rm -f build/*.o
+clobber: clean
+	rm -f systemburn
+	rmdir $(BUILD_DIR)
+
+# Pre-built test loads
+include $(TEST_DIR)/module.mk
+

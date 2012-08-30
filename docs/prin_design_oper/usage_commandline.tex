@@ -1,0 +1,40 @@
+\subsection{Command Line Interface}
+
+SystemBurn is designed to be run using a command line interface
+and has several options and other arguments that control run-time
+behavior. Also, because SystemBurn is based on a message passing
+style framework, using MPI or SHMEM, for inter-node communication
+(see the Implementation section), if running multiple nodes is 
+required, the appropriate runtime command, such as \verb!mpirun!,
+should be used to execute SystemBurn. For general use, a call to run
+SystemBurn should have options occurring first and any number of load
+files as non-option arguments. It should look like this:
+
+\begin{verbatim}
+	./systemburn [OPTIONS...] [LOAD FILES...]
+
+\end{verbatim}
+
+The following command line options can be used with SystemBurn:
+\begin{description}
+	\item[-c \#bytes] Enable running the inter-node communication load with a message size of \verb!\#bytes!. Initial testing suggests that sizing the messages just below the MPI "Eager Limit" (usually 64kb) is reasonable.
+	\item[-f "config file"] This option is used to specify a configuration file, when it is used it requires a file name as an argument. If this option is not used, the default configuration file, \verb!systemburn.load! is used.
+	\item[-l "log file"] In the future, this option will be used to specify a file in which to log data produced during run time.
+	\item[-n \# of loads] This option allows the user to clearly specify the number of non-option arguments to use as load files, using the specified number or all arguments, whichever is greater. Without this option, every non-option argument will be treated as a load file.
+	\item[-t] This option enables calculation error checking in loads that have that capability. The default behavior, without this option, disables error checking.
+	\item[-v "output level"] This option is used to specify the level of output SystemBurn will produce.
+	\begin{itemize}
+		\item Level 0, the default, produces basic, scalable output that displays the current load at initialization, periodically displays a summary of temperatures and errors that have occurred during runtime, and gives a summary of load performance at completion.
+		\item Level 1 is not as scalable, with every MPI process printing status and performance output in addition to level 0's output.
+		\item Level 2 adds output from each MPI task's sub-threads.
+		\item Level 3 adds additional debugging information to the output.
+	\end{itemize}
+	\item[-h] This option displays the help text for SystemBurn, with a usage template and a description of each command line option.
+\end{description}
+
+An example of a call to SystemBurn:
+
+\begin{verbatim}
+mpirun -np 4 ./systemburn -c 64000 -v0 -f system.conf \
+           systemload1.load systemload2.load
+\end{verbatim}

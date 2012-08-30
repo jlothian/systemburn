@@ -1,0 +1,215 @@
+%% 
+%% This is file `programs.sty',
+%% generated with the docstrip utility.
+%% 
+%% The original source files were:
+%% 
+%% programs.dtx  (with options: `style')
+%% 
+%% Copyright: Miguel Alabau, 1995    Miguel.Alabau@labri.u-bordeaux.fr 
+%% 
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{programs}
+
+%% \CharacterTable
+%%  {Upper-case    \A\B\C\D\E\F\G\H\I\J\K\L\M\N\O\P\Q\R\S\T\U\V\W\X\Y\Z
+%%   Lower-case    \a\b\c\d\e\f\g\h\i\j\k\l\m\n\o\p\q\r\s\t\u\v\w\x\y\z
+%%   Digits        \0\1\2\3\4\5\6\7\8\9
+%%   Exclamation   \!     Double quote  \"     Hash (number) \#
+%%   Dollar        \$     Percent       \%     Ampersand     \&
+%%   Acute accent  \'     Left paren    \(     Right paren   \)
+%%   Asterisk      \*     Plus          \+     Comma         \,
+%%   Minus         \-     Point         \.     Solidus       \/
+%%   Colon         \:     Semicolon     \;     Less than     \<
+%%   Equals        \=     Greater than  \>     Question mark \?
+%%   Commercial at \@     Left bracket  \[     Backslash     \\
+%%   Right bracket \]     Circumflex    \^     Underscore    \_
+%%   Grave accent  \`     Left brace    \{     Vertical bar  \|
+%%   Right brace   \}     Tilde         \~}
+%%
+
+
+\typeout{Document style `programs.sty' <1993,1994,1995>}
+
+\expandafter\ifx\csname AlreadyDefined@@Programs\endcsname\relax%
+\expandafter\def\csname AlreadyDefined@@Programs\endcsname{}%
+\else\endinput\fi
+
+%% CONTROLLING PROGRAM INDENTATION
+\newdimen\@@programindent
+\@@programindent=\z@
+\def\ProgramIndent#1{\@@programindent=#1}
+
+%% SURROUNDING PROGRAMS BY RULES
+\newif\if@@surround\@@surroundfalse
+\def\ProgramSurround{\@@surroundtrue}
+\def\@@progline{\def\@@prgln{\rule{\linewidth}{0.1mm}}\@@prgln}
+\def\@@noprogline{\rule{0pt}{0pt}}
+
+%% LINE NUMBERING
+\newlength{\@@defaultindent}
+\settowidth{\@@defaultindent}{{\tt{}12345}}
+\newif\if@@resetlineno \@@resetlinenotrue \newif\if@@unnumline
+\@@unnumlinefalse
+\newif\if@@CurrentProgIsUnnumbered \@@CurrentProgIsUnnumberedfalse
+
+\def\NoResetProgramCounter{\@@resetlinenofalse}
+
+\def\UnnumLine{\ \@@unnumlinetrue}
+
+\newcounter{@@lineno}\setcounter{@@lineno}{1}
+\def\SetProgramCounter#1{\setcounter{@@lineno}{#1}\@@resetlinenofalse}
+
+\newcounter{@@dummylineno}\setcounter{@@dummylineno}{1}
+
+\def\LeftMarginNumberLine{\let\@@PlaceOfNumbers\@@LeftMarginNumberLine}
+\def\RightMarginNumberLine{\let\@@PlaceOfNumbers\@@RightMarginNumberLine}
+\def\BothMarginsNumberLine{\let\@@PlaceOfNumbers\@@BothMarginsNumberLine}
+\def\InBodyLeftNumberLine{\let\@@PlaceOfNumbers\@@InBodyLeftNumberLine}
+\def\@@LeftMarginNumberLine{0} \def\@@RightMarginNumberLine{1}
+\def\@@BothMarginsNumberLine{2}
+\def\@@InBodyLeftNumberLine{3}
+\LeftMarginNumberLine
+
+%% PROGRAM DEFAULT FONTS
+\def\@@DefaultProgramFont{0}
+\def\ttProgram{\def\@@DefaultProgramFont{0}\def@@astyped\def@@program}
+\def\rmProgram{\def\@@DefaultProgramFont{1}\def@@astyped\def@@program}
+\def\emProgram{\def\@@DefaultProgramFont{2}\def@@astyped\def@@program}
+\def\ProgramDefaultFont{\ttProgram}
+
+%% THE REAL ENVIRONMENT
+{\catcode`\ =\active\gdef\@@vobeyspaces{\catcode`\ \active\let \@@xobeysp}}
+\def\@@xobeysp{\leavevmode\penalty10000\ }
+\def\def@@astyped{%
+    \def\@@astyped{%
+        \partopsep\z@%
+        \topsep\z@%
+        \trivlist \item[]%
+            \leftskip\@totalleftmargin%
+            \rightskip\z@%
+            \parindent\z@%
+            \parfillskip\@flushglue%
+            \parskip\z@%
+            \@tempswafalse%
+            \def\par{\if@tempswa\hbox{}\fi\@tempswatrue\@@par}%
+            \obeylines%
+            \ifcase\@@DefaultProgramFont \tt\or \rm\or \em\else \tt\fi
+            \catcode``=13 \@noligs%
+            \let\do\@makeother \do\ \do\^^K\do\^^A%
+            \frenchspacing\@@vobeyspaces%
+            \noindent\hspace{\parindent}%
+            \if@@surround\@@progline\else\@@noprogline\fi%
+            \nopagebreak%
+            }
+    \def\end@@astyped{%
+            \nopagebreak%
+            \noindent\hspace{\parindent}%
+            \if@@surround\@@progline\else\@@noprogline\fi%
+        \endtrivlist%
+        }
+}
+
+%% META-COMMANDS FOR DEFINING NEW PROGRAM ENVIRONMENTS
+\def\NewProgram#1#2{\@@newprog{#1}{#2}}
+\def\RenewProgram#1#2{\@@newprog{#1}{#2}}
+\def\@@newprog#1#2{%
+    \@namedef{#1}{%
+        \begingroup\def\@@tempa{\@nameuse{#2}}%
+        \def\@@tempb{\baselinestretch}\def\baselinestretch{1}%
+        \@ifundefined{@@tempa}{\normalsize}{\@@tempa}%
+        \def@@astyped\@@astyped%
+        \@ifnextchar[{\@@xnewprog}{\@@xnewprog[\@@programindent]}%
+    }%
+    \@namedef{end#1}{%
+        \everypar{}%
+        \if@@CurrentProgIsUnnumbered \relax%
+        \else%
+                \addtocounter{@@lineno}{1}%
+        \fi%
+        %
+        \end@@astyped%
+        \let\baselinestretch=\@@tempb\endgroup%
+        \global\@@resetlinenotrue%
+        \global\ProgramDefaultFont%
+        \global\@@surroundfalse%
+    }%
+    \@namedef{f#1}##1{\@nameuse{#1}*\par\input##1\@nameuse{end#1}}%
+    \@namedef{l#1}##1{\@nameuse{#1}\par\input##1\@nameuse{end#1}}%
+}
+
+\newlength{\@@numlinelength}
+\def\@@xnewprog[#1]{%
+        \@ifstar{%
+          \@@CurrentProgIsUnnumberedtrue
+            \setcounter{@@dummylineno}{0}%
+            \leavevmode%
+            \everypar{%
+                \refstepcounter{@@dummylineno}%
+                \@@unnumlinefalse%
+                \noindent\hspace{#1}}%
+        }%
+        {%
+          \@@CurrentProgIsUnnumberedfalse
+          \if@@resetlineno%
+                  \setcounter{@@lineno}{0}%
+          \else%
+                  \addtocounter{@@lineno}{-1}%
+          \fi%
+          \leavevmode%
+          \everypar{%
+              \if@@unnumline%
+                  \ifx \@@PlaceOfNumbers\@@InBodyLeftNumberLine%
+                      \hspace{\@@defaultindent}%
+                      \rule{0pt}{0pt}%
+                  \fi
+              \else%
+                  \refstepcounter{@@lineno}%
+                  \ifx \@@PlaceOfNumbers\@@LeftMarginNumberLine%
+                      \llap{{\rm\the@@lineno\ \ }}%
+                  \else \ifx \@@PlaceOfNumbers\@@RightMarginNumberLine%
+                      \noindent\hspace{\columnwidth}%
+                      \rlap{{\rm\ \ \the@@lineno}}%
+                      \noindent\hspace{-\columnwidth}%
+                  \else \ifx \@@PlaceOfNumbers\@@BothMarginsNumberLine%
+                      \noindent\hspace{\columnwidth}%
+                      \rlap{{\rm\ \ \the@@lineno}}%
+                      \noindent\hspace{-\columnwidth}%
+                      \llap{{\rm\the@@lineno\ \ }}%
+                  \else \ifx \@@PlaceOfNumbers\@@InBodyLeftNumberLine%
+                      \hspace{\@@defaultindent}%
+                      \rule{0pt}{0pt}%
+                      \llap{{\rm\the@@lineno\ \ }}%
+                  \else
+                       \llap{{\rm\the@@lineno\ \ }}%
+                  \fi\fi\fi\fi
+              \fi\@@unnumlinefalse%
+              \noindent\hspace{#1}%
+        }%
+    }%
+}
+
+%% PREDEFINED ENVIRONMENTS AND COMMANDS
+\def\def@@program{%
+  \NewProgram{program}{normalsize}
+  \NewProgram{programl}{large}
+  \NewProgram{programL}{Large}
+  \NewProgram{programs}{small}
+  \NewProgram{programf}{footnotesize}
+  \NewProgram{programsc}{scriptsize}
+  \NewProgram{programt}{tiny}
+}
+\ProgramDefaultFont
+
+%% OLD MACRO NAMES PRESENT HERE FOR COMPATIBILITY REASONS
+\let\newprogram=\NewProgram \let\renewprogram=\RenewProgram
+\let\noresetprogramcounter=\NoResetProgramCounter
+\let\programindent=\ProgramIndent
+\let\programsurround=\ProgramSurround
+\let\setprogramcounter=\SetProgramCounter \let\unnumline=\UnnumLine
+\let\BothMarginNumberLine=\BothMarginsNumberLine
+
+
+\endinput
+%% 
+%% End of file `programs.sty'.

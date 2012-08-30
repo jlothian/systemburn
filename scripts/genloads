@@ -1,0 +1,93 @@
+#!/bin/bash
+#  This file is part of SystemBurn.
+#
+#  Copyright (C) 2012, UT-Battelle, LLC.
+#
+#  This product includes software produced by UT-Battelle, LLC under Contract No. 
+#  DE-AC05-00OR22725 with the Department of Energy. 
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the New BSD 3-clause software license (LICENSE). 
+#  
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the 
+#  LICENSE for more details.
+#
+#  For more information please contact the SystemBurn developers at: 
+#  systemburn-info@googlegroups.com
+
+DGEMM=5000
+DSTREAM=10000000
+DSTRIDE=10000000
+FFT1D=10000000
+FFT2D=5000
+GUPS=26
+LSTREAM=10000000
+LSTRIDE=10000000
+PV1=10000000
+PV2=10000000
+PV3=10000000
+RDGEMM=5000
+SLEEP=5
+
+
+genload() {
+	if [ "$#" -ne "5" ] 
+	then
+		echo "usage: $0 TIME PROCS CORES LOAD SIZE"
+		echo "          where:"
+		echo "               TIME    : Runtime for this load"
+		echo "               PROCS   : Number of processors per node"
+		echo "               CORES   : Number of cores per processor"
+		echo "               LOAD    : Load name"
+		echo "               SIZE    : Size parameter for this load"
+		echo "          The following examples create 1200 second loads targeting"
+		echo "          nodes with two quad-core processors."
+		echo "               $0 1200 2 4 DSTREAM 10000000"
+		echo "               $0 1200 2 4 DGEMM 5000"
+		echo "               $0 1200 2 4 GUPS 26"
+		return
+	fi
+
+	ITIME=$1
+	IPROCS=$2
+	ICORES=$3
+	ILOAD=$4
+	ISIZE=$5
+
+	OUTFILE="testload.${ITIME}sec.${IPROCS}p.${ICORES}c.${ILOAD}.${ISIZE}"
+	echo "LOAD_START"					>  ${OUTFILE}
+	echo "	RUNTIME  ${ITIME}"				>> ${OUTFILE}
+	echo "	SCHEDULE BLOCK"					>> ${OUTFILE}
+	echo "	SUBLOAD  ${IPROCS}"				>> ${OUTFILE}
+	echo "	["						>> ${OUTFILE}
+	echo "		PLAN ${ICORES} ${ILOAD} ${ISIZE}"	>> ${OUTFILE}
+	echo "	]"						>> ${OUTFILE}
+	echo "LOAD_END"						>> ${OUTFILE}
+	return
+}
+
+if [ "$#" -ne "3" ]
+then
+	echo "usage: $0 RUNTIME PROCESSORS CORES_PER_PROCESSOR"
+	exit
+fi
+
+TIME=$1
+PROCS=$2
+CORES=$3
+
+genload $TIME $PROCS $CORES DGEMM	$DGEMM
+genload $TIME $PROCS $CORES DSTREAM	$DSTREAM
+genload $TIME $PROCS $CORES DSTRIDE	$DSTRIDE
+genload $TIME $PROCS $CORES FFT1D	$FFT1D
+genload $TIME $PROCS $CORES FFT2D	$FFT2D
+genload $TIME $PROCS $CORES GUPS	$GUPS
+genload $TIME $PROCS $CORES LSTREAM	$LSTREAM
+genload $TIME $PROCS $CORES LSTRIDE	$LSTRIDE
+genload $TIME $PROCS $CORES PV1		$PV1
+genload $TIME $PROCS $CORES PV2		$PV2
+genload $TIME $PROCS $CORES PV3		$PV3
+genload $TIME $PROCS $CORES RDGEMM	$RDGEMM
+genload $TIME $PROCS $CORES SLEEP	$SLEEP

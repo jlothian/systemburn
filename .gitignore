@@ -1,0 +1,11 @@
+autom4te.cache
+docs/html
+docs/man
+config.log
+config.cache
+config.status
+config.h
+Makefile
+build
+systemburn
+*~

@@ -1,0 +1,40 @@
+/*****************************************************************
+ *
+ * SYSTEMBURN
+ *
+ * System operational power and thermal envelope test
+ *
+ * Version: REPLACED_RELEASE_DATE
+ *
+ * Copyright (c) 2008, 2009, 2010, 2011, 2012 UT-Battelle, LLC.
+ *
+ * All Rights Reserved. See the file 'LICENSING.pdf' for the
+ * License Agreement.
+ *
+ * Authors: Jeffery A. Kuehn, kuehn@ornl.gov
+ *	    Jonathan Dobson,  dobsonjd@ornl.gov
+ *	    Ross Glandon,     glandonsr@ornl.gov
+ *	    Nick Lewkow,      lewkownnr@ornl.gov
+ *	    Jacob Peek,       peekjt@ornl.gov
+ *          Josh Lothian,     lothian@ornl.gov
+ *          David Reister,    dbr@ornl.gov
+ *
+ *          Extreme Scale Systems Center
+ *          Oak Ridge National Laboratory 
+ *          PO Box 2008 MS6164
+ *          Oak Ridge TN 37831-6164
+ *
+ * The authors also wishes to acknowledge and thank the following
+ * collaborators for our many conversations and their critiques,
+ * questions, and suggestions:
+ *
+ *         Stephen Poole
+ *         Stephen Hodson
+ *         Joshua Ladd
+ *
+ * Oak Ridge National Laboratory is operated by UT-Battelle, LLC
+ * for the U.S. Department of Energy.
+ *
+ * This work was funded by the U.S. Department of Defense
+ *
+ ****************************************************************/

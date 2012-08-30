@@ -1,0 +1,12 @@
+\subsection{Error Flags}
+
+An error flag system has been implemented in SystemBurn as a way of tracking possible system failures while running the benchmark. If running SystemBurn causes a total system failure, the information printed to the terminal while running the benchmark should be enough to pinpoint what module, or combination of modules, caused the hardware failure. Through the periodic printing of error flag statuses across the machine, as well as current loads, the user has a brief, yet detailed, overview of the current benchmark progress on the machine. 
+
+There are several different types of error flags which SystemBurn tracks. 
+\begin{itemize}
+	\item Memory Allocation Failures
+	\item Affinity Mask Failures
+	\item Module Calculation Errors
+	\item Module Communication Errors
+	\item Module Specific Errors
+\end{itemize} 

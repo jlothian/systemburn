@@ -1,0 +1,35 @@
+\section{Vision}
+
+Traditional benchmarks probe only a few of a machine's hardware features
+at a time, which doesn't give a good overall feel for how the system acts
+under all kinds of stress. Conversely, SystemBurn has been engineered to
+place a system under composite stress. Under user-control, the induced
+stress can be either purely synthetic, to stress the system's operating
+envelope, or a composite load intended to provide some emulation of a real
+application or suite of applications, to examine "typical" operating
+conditions. SystemBurn was created to allow the user flexibility when
+choosing which hardware components are to be stressed and how that is
+to occur.
+
+SystemBurn provides a capability for the creation and control
+of multiple concurrent artificial system loads. These loads can be
+used to test a system under a variety of stress states and to maintain
+those stress states in a controlled fashion allowing for collection of
+physical measurements of various parameters of interest on the system
+and its environment, including but not limited to temperatures, air
+flows, and power draws, both per node and for the overall environment.
+These data sets can then be used to determine which loads cause the
+most stress, in terms of component temperature, power drawn, heat
+generated, etc. Thus, with purpose-crafted loads, the actual peak
+run time power requirement and thermal load can be measured, providing
+data for the assessment of sufficiency of power and cooling capacity and
+the data required for the reallocation of power and cooling in excess
+of the actual requirement, rather than relying on power and cooling
+estimates from the vendor. From the data gathered using SystemBurn it
+will be possible to compile power and temperature profiles for specific
+tasks. These profiles have the potential to eventually trace the tasks
+running on a machine simply by looking at the profiles. Through the use of
+multiple load modules, each of which stress the system in a specific way,
+it is possible to assemble loads representing an extreme system stress,
+or loads which perform similarly to some single large application.
+

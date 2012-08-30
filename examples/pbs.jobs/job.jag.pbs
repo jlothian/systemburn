@@ -1,0 +1,28 @@
+#!/bin/ksh
+#PBS -A STF006
+#PBS -N SystemBurn
+#PBS -l size=16
+#PBS -l walltime=01:00:00
+#PBS -j eo
+#PBS
+
+set -x
+
+export NRANKS=16
+export JOBTIME=`date +%Y.%m.%d__%H:%M`
+export WORKDIR=/lustre/widow1/scratch/kuehn/
+
+mkdir -p ${WORKDIR}/SystemBurn.${JOBTIME}
+
+cd ~/DEVTREE/systemburn
+cp systemburn s1 s2 s3 systemburn.config ${WORKDIR}/SystemBurn.${JOBTIME}
+
+cd $WORKDIR/SystemBurn.${JOBTIME}
+aprun -n ${NRANKS} -N1 -d4 ./systemburn s1 s2
+
+ls -l
+cd ..
+rm -rf SystemBurn.${JOBTIME}
+
+exit 0
+

@@ -1,0 +1,115 @@
+\subsection{Configuration Files}
+
+The configuration file, \verb!systemburn.config!, contains several
+important values which control the SystemBurn suite's overall behavior. A
+note on syntax: all characters on a line after a \verb!#! symbol are
+treated as comments, and each parameter is associated with a specific
+keyword that must precede the value on that line; if one of the keywords
+is not used, a default value will be substituted.
+
+\begin{description}
+
+	\item[Maximum Number of Worker Threads] Keyword:
+	\verb!WORKERS!. Default: 16 threads. This value specifies the
+	maximum number of execution threads per MPI process to create
+	when scheduling the current load. If the number of module loads
+	in the load file exceeds the number given here, then the entire
+	module load will not be scheduled, but only the first modules
+	up to this maximum number.
+
+	\item[Thermal Relaxation Time] Keyword:
+	\verb!REST_TIME!. Default: 10 seconds.
+	This is the time period for which the code will idle before
+	beginning the set of loads and then again after completing the
+	set of loads. The intent is to allow the idling system to 
+	come into a baseline thermal equilibrium before and after the 
+	loads. It should be noted that the loads should also run long
+	enough for the system to come into a stressed thermal equilibrium
+	for an accurate max temperature.
+	This value can be set to 1 for quick testing.
+	For small systems which have little impact on their environment
+	values between 30-300 seconds are generally sufficient.
+	Recommendations for values for larger systems which do
+	affect their environment have yet to be developed but will likely
+	run much longer to allow machine room power and cooling to also
+	reach equilibrium.
+
+	\item[Emergency Shutdown Temperature] Keyword: \verb!MAX_TEMP!. Default:
+	70 degrees Celsius. This value specifies the maximum temperature
+	a node can reach before SystemBurn shuts itself down. This feature is 
+	only enabled on newer kernels which support temperature monitoring.
+
+	\item[Monitor Thread Checking Period] Keyword:
+	\verb!MONITOR_FREQ!. Default: 1 second. This specifies how often
+	the monitor thread retrieves temperature data from the system.
+	This feature is only enabled on newer kernels which support
+	temperature monitoring.
+
+	\item[Monitor Thread Output Period] Keyword:
+	\verb!MONITOR_OUT!. Default: 10 seconds. This specifies how
+	often the monitor thread will print its temperature information,
+	if output from threads other than the main thread have been
+	allowed (see the verbosity command line option, above).
+	This feature is only enabled on newer kernels which support
+	temperature monitoring.
+
+\end{description}
+
+An example configuration file appears as follows: 
+
+\begin{verbatim}
+
+# systemburn.config
+
+# This file contains the default configuration
+# information for systemburn. Comments are
+# denoted by a '#' sign, and the needed numbers
+# are described by the comments below:
+
+# Number of worker threads:
+WORKERS 16
+
+# Thermal Relaxation time: (seconds)
+# This is the time period for which the code will idle before
+# beginning the set of loads and then again after completing the
+# set of loads. The intent is to allow the idling system to 
+# come into a baseline thermal equilibrium before and after the 
+# loads. It should be noted that the loads should also run long
+# enough for the system to come into a stressed thermal equilibrium
+# for an accurate max temperature.
+# This value can be set to 1 for quick testing.
+# For small systems which have little impact on their environment
+# values between 30-300 seconds are generally sufficient.
+# Recommendations for values for larger systems which do
+# affect their environment have yet to be developed but will likely
+# run much longer to allow machine room power and cooling to also
+# reach equilibrium.
+REST_TIME 10
+
+# The following are only useful on newer systems that support
+# internal temperature monitoring via the kernel's /sys and
+# /proc interfaces. Generally, this requires that the appropriate
+# Linux kernel module (k8temp, k10temp, coretemp) or equivalent
+# be loaded into the kernel.
+
+# Emergency Shutdown Temperature: (degrees Centigrade)
+# Over Temp protection requires access to the processor temperature.
+# A few important notes:
+# on AMD systems (esp k8) the 
+MAX_TEMP 85
+
+# Temperature Monitoring Frequency (in seconds)
+# This determines how often the internal core temperature data is
+# checked/updated and how often we check for an overtemp emergency.
+MONITOR_FREQ 5
+
+# Monitor thread ouput period:
+# This is how often we summarize and print the temperatures.
+# Note that the summary requires an MPI_REDUCE or equivalent
+# and can thus be expense on larger system partitions. Adjust
+# the output frequency accordingly:
+# Small systems: 15-60 seconds
+# larger systems: 
+MONITOR_OUT 15
+
+\end{verbatim}

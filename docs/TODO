@@ -1,0 +1,27 @@
+*	tune PV1/2/3 loads, add loads for interlagos and GPUs
+
+*	Be able to map temperatures. Also needs to be able to locate specific temps to do this.
+
+*	Add more detailed logging. Idea is to print this detailed report to a file.
+
+*	Add instruentation to the loads, as with Confidence.
+
+*	Be able to compile and run on other operating systems than Linux.
+
+*	Simple metrics.
+
+*	Have a library of high power-draw loads.
+
+*	Have adaptive loading.
+
+*	Set the monitor to also watch GPU temps, fan speeds, memory usage, and other motherboard temps such as memory.
+
+*	PAPI counters for memory heirarchy, etc.
+
+*	Disk iops & bandwidth.
+
+*	Generalize the program. Don't rely on ACPI for temperatures, have backups if libraries for the plans aren't there (CBLAS, FFTW, etc.), etc.
+
+*	Have an orthogonal basis set of loads to examine power impact of stressing an individual component.
+
+*	Check and/or correctly determine all buffer sizes!

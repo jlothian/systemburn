@@ -1,0 +1,46 @@
+#define ASYNC_WORKERS 1
+#define LINUX_PLACEMENT 1
+#define USE_PROC_TEMP 1
+
+#define HAVE_BLAS 1
+#define HAVE_CUBLAS 1
+#define HAVE_FFTW3 1
+
+#define HAVE_SHMEM 1
+/* Define if num_pes() and my_pe() need a leading underscore */
+/* #undef SHMEM_LEADING_UNDERSCORE */
+/* 0 for no 1 yes for Leading underscore for num_pes() and my_pe() */
+#define SLU 1
+
+#define STDC_HEADERS 1
+/* Define to necessary symbol if this constant uses a non-standard name on your system. */
+/* #undef PTHREAD_CREATE_JOINABLE */
+
+#define HAVE_INTTYPES_H 1
+/* Define to `unsigned int' if <sys/types.h> does not define. */
+/* #undef size_t */
+#define HAVE_MEMORY_H 1
+#define HAVE_MEMSET 1
+#define HAVE_MPI 1
+#define HAVE_PTHREAD 1
+#define HAVE_SCHED_H 1
+#define HAVE_STDINT_H 1
+#define HAVE_STDLIB_H 1
+#define HAVE_STRINGS_H 1
+#define HAVE_STRING_H 1
+#define HAVE_SYS_STAT_H 1
+#define HAVE_SYS_TYPES_H 1
+#define HAVE_UNISTD_H 1
+#define HAVE_UTMPX_H 1
+#define HAVE_TIMERS 1
+
+#define TIMER_X86_64
+
+#define NDEBUG 1
+
+#define PACKAGE_BUGREPORT ""
+#define PACKAGE_NAME "SystemBurn"
+#define PACKAGE_STRING "SystemBurn 1.0.2"
+#define PACKAGE_TARNAME "systemburn"
+#undef  PACKAGE_URL
+#define PACKAGE_VERSION "1.0.2"

@@ -1,0 +1,39 @@
+LOAD_START
+
+	RUNTIME 30
+
+	SCHEDULE BLOCK
+
+	SUBLOAD 2
+
+	[
+		#PLAN 1 CBA	0.5GB	32	21
+		#PLAN 1 DGEMM	0.5GB
+		#PLAN 1 DSTREAM	0.5GB
+		#PLAN 1 DSTRIDE	64MB
+		#PLAN 1 FFT1D	0.5GB
+		#PLAN 1 FFT2D	0.5GB
+		#PLAN 1 GUPS	8.0GB
+		#PLAN 1 LSTREAM	0.5GB
+		#PLAN 4 LSTRIDE	64MB
+		#PLAN 4 PV4	0.5MB
+		#PLAN 2 PV3	512MB
+                #PLAN 2 GUPS     6.5GB
+		PLAN 2 PV2	0.5G
+		#PLAN 6 PV3	0.5GB
+		#PLAN 1 PV4	0.5MB
+		#PLAN 1 RDGEMM	0.5GB
+		#PLAN 1 SLEEP	1
+		#PLAN 1 TILT	32	47
+		#PLAN 1 WRITE	10MB	iotest.
+		
+		#MASK  0 1 2 3 
+                #MASK  4 5 6 7
+
+		# The above specifies which cores these threads can run on. You do not 
+		# have to specify the same number of cores as threads as more than one
+		# thread can run on a single core. 
+
+	]
+
+LOAD_END

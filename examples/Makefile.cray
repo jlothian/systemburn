@@ -1,0 +1,120 @@
+##############################################################
+# The following required modules are prerequisite to build.
+#	module purge
+#	module purge
+#	module load modules
+#	module load Base-opts
+#	module load DefApps
+#	module load PrgEnv-gnu
+#	module load xt-mpich2
+#	module load xt-shmem
+#	module load xt-asyncpe
+#	module load pmi
+#	module load atp
+#	module load xt-libsci
+#	module load fftw
+#	module load cudatoolkit
+#	module load gsl
+#
+# PBS/Moab/Git for ORNL development environment	
+#	module load git
+#	module load moab
+#	module load torque
+##############################################################
+
+##############################################################
+# Set these values for your system
+# GSL can be replaced by another library that provides
+# cblas_dgemm()
+##############################################################
+CC      = cc
+MPICC   = cc
+CFLAGS  = -g -O2  -fopenmp  -I/opt/nvidia/cudatoolkit/default/include -I/opt/fftw/3.3.0.0/x86_64/include
+LDFLAGS = -L/opt/nvidia/cudatoolkit/default/lib64 -L/opt/fftw/3.3.0.0/x86_64/lib
+LIBS    = -lcudart -lcublas -L/sw/xk6/gsl/1.15/cle4.0_gcc4.6.2/lib -lgslcblas -lfftw3 -lm  
+DEPC	= /opt/gcc/4.6.2/bin/gcc
+
+SHMEM_FLAGS=-DHAVE_SHMEM -DSLU
+NO_SHMEM_FLAGS=-UHAVE_SHMEM -USLU
+
+# whether or not to compile DGEMM or FFTW modules
+ENABLE_BLAS = 1
+ENABLE_FFTW = 1
+ENABLE_CUDA = 1
+
+##############################################################
+##############################################################
+# you should not need to change anything below this point
+##############################################################
+##############################################################
+
+# Paths to the include, source, plan, and build directories...
+SRC_DIR   = src
+PLAN_DIR  = planlib
+BUILD_DIR = build
+TEST_DIR  = tests
+# Set VPATH to search these directories for .c files
+VPATH = $(SRC_DIR):$(PLAN_DIR)
+
+# Search paths for the header files
+INCLUDES = -I$(SRC_DIR) -I$(PLAN_DIR) -I.
+
+# Include makefile modules
+include $(SRC_DIR)/module.mk
+include $(PLAN_DIR)/module.mk
+ALL_SRC := $(SRC_SRC) $(PLAN_SRC)
+
+# objects to build
+SRC_OBJS_MPI := $(patsubst $(SRC_DIR)/%.c, $(BUILD_DIR)/%-mpi.o, $(filter %.c, $(SRC_SRC)))
+SRC_OBJS_SHMEM := $(patsubst $(SRC_DIR)/%.c, $(BUILD_DIR)/%-shmem.o, $(filter %.c, $(SRC_SRC)))
+PLAN_OBJS_MPI := $(patsubst $(PLAN_DIR)/%.c, $(BUILD_DIR)/%-mpi.o, $(filter %.c, $(PLAN_SRC)))
+PLAN_OBJS_SHMEM := $(patsubst $(PLAN_DIR)/%.c, $(BUILD_DIR)/%-shmem.o, $(filter %.c, $(PLAN_SRC)))
+ALL_OBJS_MPI := $(SRC_OBJS_MPI) $(PLAN_OBJS_MPI)
+ALL_OBJS_SHMEM := $(SRC_OBJS_SHMEM) $(PLAN_OBJS_SHMEM)
+
+# code dependencies to generate
+SRC_DEPS := $(patsubst $(SRC_DIR)/%.c, $(BUILD_DIR)/%.d, $(filter %.c, $(SRC_SRC)))
+PLAN_DEPS := $(patsubst $(PLAN_DIR)/%.c, $(BUILD_DIR)/%.d, $(filter %.c, $(PLAN_SRC)))
+ALL_DEPS := $(SRC_DEPS) $(PLAN_DEPS)
+MAKEDEP := $(DEPC) -MM
+
+
+# Build rules
+.DEFAULT: all
+all: systemburn-mpi systemburn-shmem
+
+
+systemburn-mpi: build_dir $(ALL_OBJS_MPI)
+	$(MPICC) $(CFLAGS) $(INCLUDES) $(LDFLAGS) $(LIBS) -o systemburn-mpi $(ALL_OBJS_MPI) 
+systemburn-shmem: build_dir $(ALL_OBJS_SHMEM)
+	$(CC) $(CFLAGS) $(INCLUDES) $(LDFLAGS) $(LIBS) -o systemburn-shmem $(ALL_OBJS_SHMEM) 
+
+build_dir:
+	mkdir -p $(BUILD_DIR)
+$(BUILD_DIR)/%-mpi.o: %.c
+	$(MPICC) $(NO_SHMEM_FLAGS) $(CFLAGS) $(INCLUDES) -c $< -o $@
+$(BUILD_DIR)/%-shmem.o: %.c
+	$(CC) $(SHMEM_FLAGS) $(CFLAGS) $(INCLUDES) -c $< -o $@
+$(BUILD_DIR)/%.d: %.c
+	@echo "Generating dependencies for $< (output in $@)"
+	@mkdir -p $(BUILD_DIR)
+	@# call 'gcc -MM %.c', then add the build dir and %.d to the left side of the colon
+	@$(MAKEDEP) $(INCLUDES) $< | sed 's@^\(.*\)\.o:@$(BUILD_DIR)/\1.d $(BUILD_DIR)/\1.o:@g' > $@
+
+# Include dependencies for build commands
+ifeq ($(strip $(filter %clean %clobber, $(MAKECMDGOALS)) ),)
+-include $(ALL_DEPS)
+endif
+
+# Other options
+depclean:
+	rm -f build/*.d
+clean: depclean
+	rm -f build/*.o
+clobber: clean
+	rm -f systemburn
+	rmdir $(BUILD_DIR)
+
+# Pre-built test loads
+include $(TEST_DIR)/module.mk
+

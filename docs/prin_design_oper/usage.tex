@@ -1,0 +1,40 @@
+\section{Usage}
+
+
+Running SystemBurn on a given machine is a four step process.
+\begin{itemize}
+	\item[Build:] Build the SystemBurn suite. This 
+	requires running the \verb!configure! script to set up the suite
+	for your system (or manually modifying \verb!Makefile.in! to 
+	point to the appropriate libraries and compilers for the target
+	system and defining the appropriate macros in \verb!config.h!).
+	Once the build is configured simply type:
+	\begin{itemize}
+		\item \verb!make clean!
+		\item \verb!make!
+	\end{itemize}
+	\item[Config:] Create a configuration file or modify the default
+	file, \verb!systemburn.config!. Configuration section of this
+	document contains detailed instructions on how to do this.
+	\item[Load:] Create a load file or modify the default load in
+	\verb!systemburn.load!. This includes determining which modules,
+	or plans, to load and how to load them on the architecture.
+	The Load Files section of this document contains detailed
+	instructions on how to do this.
+	\item[Run:] Determine which nodes will be running SystemBurn. If
+	a homogeneous node distribution of the load is desired then
+	setting up a single MPI tasks per node will be sufficient. If
+	a heterogeneous node distribution of the load is desired then
+	the following steps must be taken:
+	\begin{itemize}
+		\item Create all the different loads to be used. This will
+		require multiple load files (one for each different load).
+		\item Set up a batch script for the system which will
+		run different instances of SystemBurn on a set number
+		of nodes. (Each instance of SystemBurn will be given
+		one of the load files set up in step 1).
+		\item Run SystemBurn either from the command line for
+		the homogeneous node distribution or with the batch
+		script for the heterogeneous node distribution.
+	\end{itemize}
+\end{itemize}  

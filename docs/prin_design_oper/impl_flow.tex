@@ -1,0 +1,52 @@
+\subsection{Program Flow}
+
+\subsubsection{SystemBurn Scheduler Thread(s): (src/systemburn.c:main()):}
+
+\begin{itemize}
+	\item Initialize MPI/SHMEM
+	\item All scheduler threads initialize global variables from command line options
+	\item ROOT node scheduler thread (MPI/SHMEM rank 0) reads and broadcasts the configuration file to all ranks.
+	\item All scheduler threads initialize the local error flag system
+	\item All scheduler threads initialize the local performance data gathering system
+	\item All scheduler threads spawn a single monitor thread on their node
+	\item All scheduler threads spawn multiple worker threads on their node (initial load: "sleep")
+	\item For each load do the following:
+	\begin{itemize}
+		\item ROOT scheduler thread reads and broadcasts the next load description
+		\item ROOT scheduler thread logs the new load to standard out
+		\item All scheduler threads update the plan structures for the worker threads on their node according to the new load
+		\item While the new load runs:
+		\begin{itemize}
+			\item All scheduler threads on all nodes run the communication test (if it is enabled)
+			\item ROOT scheduler thread checks time and broadcasts continuation, completion, and output flags
+			\item All scheduler threads perform reduction and output of temperature state and error flag state at intervals
+		\end{itemize}
+	\end{itemize}
+	\item Upon completion of all loads, stop all of the worker threads and clean up their traces in memory
+	\item Sleep function: Sleep to get temperatures back to idle level
+	\item Perform global reductions on gathered performance data and calculate simple statistics
+	\item ROOT node logs performance data to standard out
+	\item Finalize communication framework
+	\item Exit 
+\end{itemize} 
+
+\subsubsection{SystemBurn Worker Threads: (src/worker.c:WorkerThread())}
+
+\begin{itemize}
+	\item Each worker thread consists of the following loop:
+	\begin{itemize}
+		\item If the scheduler passes a NULL load plan, terminate this worker thread
+		\item If the scheduler passes a new load plan:
+		\begin{itemize}
+			\item Adjust thread affinity as required (newer kernels only)
+			\item Log performance data from the previous load plan
+			\item Clean up the previous load plan
+			\item Install the new load plan
+			\item Initialize the new load plan
+			\item If the initialization fails switch to the "sleep" plan
+		\end{itemize}
+		\item run the load
+	\end{itemize}
+\end{itemize}
+
+

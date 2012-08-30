@@ -1,0 +1,71 @@
+\section{Design and Development}
+
+Phase 0 of the SystemBurn Project created a proof-of-concept prototype
+which demonstrated the ability to track physical response to various
+computational loads placed on a single server \cite{SystemBurn2009}. It was
+prototyped using a combination of UNIX Shell, Perl, Python, and C, using
+existing standalone benchmarks, and thus was not suitable for use on
+MPP systems or systems at extreme scale. The prototype was tested on a
+variety Linux servers and nodes of a small Linux cluster, to demonstrate
+the correspondence between various workload tests and thermal response.
+Monitoring was strictly external to the benchmark and required manual
+correlation of workload profiles to temperature profiles.
+
+Phase 1 of SystemBurn (the current version) advances the concept
+by extending coordination across multiple nodes of clusters and MPP
+systems. Phase 1 is a hybrid distributed/multi-threaded parallel benchmark
+implemented in C, with MPI (to coordinate loading and aggregate state
+between nodes) and Pthreads (to monitor, schedule, and execute loads
+within a node). The lightweight, low-level multi-threading enabled
+by Pthreads is used to fork multiple threads of execution on either
+single or multiple processor core(s). Each thread has responsibility for
+managing one task concurrent with all other activity on the node. Most
+of these threads execute a load module that targets a specific hardware
+component or emulates the stress induced by a particular algorithm. Two
+other threads are critical to the design: (1) a node monitoring thread,
+which is responsible for collecting data on the node on which it is
+running and reporting this to (2) the scheduler and coordination thread
+which handles communication and scheduling, including the aggregation of
+error events and monitor data across the nodes, and the load and placement
+specifications.
+
+The user specifies the loading and placement using a simple structured
+specification syntax language to describe the size and type of the loads
+to be run by the worker threads, and the placement of worker threads
+within a node. This simple specification is replicated across the plans 
+within a particular job. Heterogeneity can be achieved by running several such
+jobs with different load specifications concurrently.
+
+The Phase 1 prototype supports thread placement and temperature monitoring
+capability when running on newer versions of the Linux kernel. For
+older kernels, the prototype code recognizes the missing facilities
+and disables in-site monitoring.  A small library of prototype loads
+was developed to flesh-out the design of the load library's API's. The
+resulting load library is highly modular and easily extensible by the end
+user. Phase 1 is capable of running a variety of modular load stresses
+across multiple scales of computer systems. It has thus far been tested
+on laptops, servers, clusters, Cray XT systems, and IBM BlueGene systems.
+
+For future Phases, SystemBurn will continue to pursue the goal of putting
+extreme (abnormal) stress on the system while measuring parameters of
+interest, e.g. temperature, fan speeds, load on the system, IPS and
+performing periodic data integrity checks. We hope to use SystemBurn to
+characterize how performance and accuracy are affected by extreme heat,
+determine the physical limits of the chip, and determine whether or not
+a particular chip is capable of meeting the demands of extreme-scale
+software applications. Eventually, we hope to determine if we can drive
+a chip to such abnormal levels that excessive heat may result in a loss
+of numerical accuracy or may possibly cause physical damage to the chip,
+e.g. destroying elements or the entire chip. We hope to leverage this
+knowledge to address weaknesses in chip design. As with the CPU impact,
+we intend to be able to eventually exercise every element of a system,
+e.g. networking, I/O, and accelerators. If it is required, we will code
+elementary operations in the assembly language of the target machine.
+This will only be done if we find that we can not generate enough of
+a workload to severely stress the elements under test. In addition we
+plan to use SystemBurn to determine from an algorithmic point of view,
+how the computational complexity of a variety of algorithms will affect
+power load on current and future systems. We will also use the results
+from SystemBurn to determine potential workload distributions as well
+as power signatures to be used in our power analytics.
+

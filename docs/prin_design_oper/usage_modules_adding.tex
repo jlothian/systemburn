@@ -1,0 +1,41 @@
+\subsection{Adding New Modules}
+
+There are templates included in the \verb!planlib! directory to aide
+in creating new modules. These files are called \verb!new_module.c! and
+\verb!new_module.h!. They contain the necessary format for creating new
+modules. The steps to add new modules to SystemBurn are as follows:
+
+\begin{enumerate}
+        \item Make a copy of \verb!new_module.c! and name the file accordingly.\\ e.g. \verb!plan_NewModule.c!
+	\item Do the same for the header file, \verb!new_module.h!. This is where you will create all of the structures for the new module.
+	\item Be sure both files are in the \verb!planlib! directory.
+        \item Be sure the names of all the functions and their prototypes match. Also, it is recommended that they fall into the same naming scheme as the existing loads. i.e. makeFFT1DPlan(*) (FFT1D is the name of the load.) However, this naming scheme is not necessary for the program to function. You need the 6 listed functions, as well as a plan\_info struct.
+	\item In the make function, one of the parameters that it will receive will be the memory footprint size for the main data structure of your plan. You will need to convert this into the variables you need in order to correctly allocate memory.
+		\begin{enumerate}
+			\item A good example is \verb!plan_dgemm.c!: in its make function, it must separate the given memory footprint into 3 identical 2D arrays of doubles. To do this, it divides by \verb!3*sizeof(double)!, then takes the square root of the result. This results in a total memory usage of the value given in the load file.
+		\end{enumerate}
+        \item Change the init, kill, and parse functions to use your structs and data structures.
+        \item Write whatever is needed to execute the exec function. It is preferable to use additional compute functions (declare the prototypes in the header) if the code is lengthy. The given template provides two sections that can be filled: an execution phase and an optional calculation checking phase. Also demonstrated is the use of performance timers, of which 3 are available and 2 are used.
+        \item Anywhere there is a potential fatal error (malloc, etc.) or a calculation error, be sure to have the load return flags to indicate if anything goes wrong. See existing loads for examples. This is actually done by setting the dummy variable, \verb!ret!, to the flag value. To set \verb!ret!, call the \verb!make_error! function, with either one of the enum values( i.e. ALLOC for allocation errors) or the index value of your custom error messages.
+	\item Change the perf function to calculate the correct operation count for each of the timers used in the exec function. For example, the DGEMM plan performs on the order of \verb!2*M*M*M! floating point operations per execution, where M is one dimension of the matrix. So, to calculate the total number of operations, this value is multiplied by the execution count of the module.
+	\item Add your plan\_info struct into the .c file. This consists of:
+		\begin{enumerate}
+			\item Plan name (actually the \verb!plan_choice! enum value you will set in the next step.
+			\item Name of your array of custom error messages (if none are needed, then you can just say \verb!NULL!.)
+			\item Number of messages in your custom array (if you used \verb!NULL! this is 0.)
+			\item Name of your make function.
+			\item Name of your parse function.
+			\item Name of your exec funtion.
+			\item Name of your init function.
+			\item Name of your kill function.
+			\item Name of your perf function.
+			\item An array of 3 strings containing the units to be associated with the performance timers. (\verb!NULL! if that timer is not in use.
+		\end{enumerate}
+        \item Edit the \verb!planheaders.h! file as in the following steps:
+		\begin{enumerate} 
+			\item Add the new module's name to the \verb!plan_choice! enum. Be sure to place it at the end of the lists, but before the \verb!UNKN_PLAN! value, which is used to denote the length of the enumeration.
+			\item Add your \verb!plan_info! struct to the \verb!plan_list! array. Be sure it is in the same index position as your module is in \verb!plan_choice!.
+			\item Include the new header file in the section with all of the \#include's. Also include any additional headers needed to run the new load.
+		        \item To run the new module add it into your load file using the name you gave it in your plan\_info struct. Compile and run Systemburn.
+		\end{enumerate}
+\end{enumerate}

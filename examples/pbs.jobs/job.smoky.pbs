@@ -1,0 +1,9 @@
+#PBS -A STF006
+#PBS -l nodes=32:ppn=1
+#PBS -l walltime=01:00:00
+:
+cd /ccs/home/kuehn/DEVTREE/systemburn
+export LD_LIBRARY_PATH=/sw/smoky/blas-goto/1.0/centos5.5_pgi10.4/lib:/sw/smoky/ompi/1.4.2/centos5.5_pgi10.4/lib:/ccs/compilers/pgi/centos5.5-x86_64/10.4/linux86-64/10.4/libso:/ccs/compilers/pgi/centos5.5-x86_64/10.4/linux86-64/10.4/lib:/sw/smoky/python/2.6.5/centos5.3_gnu4.1.2/lib/
+
+mpirun -np 32 ./systemburn s1 s2 s3
+

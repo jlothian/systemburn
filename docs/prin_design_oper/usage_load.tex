@@ -1,0 +1,196 @@
+\subsection{Load Files}
+
+The load file for SystemBurn has been designed with flexibility in
+mind. During execution, a single load is run at a time, with the same load
+running on each MPI process. Each load contains a run time value and is
+also subdivided into one or more sub-loads, each of which contain some
+number of plans. Each sub-load is also associated with a CPU set mask,
+some subset of the CPU cores available to the MPI process running the
+load. With this association, plans contained in a sub-load with a given
+CPU set can be required to run on only the CPUs in that set. An example
+use of this capability is running SystemBurn on a dual socket system. Two
+sub-loads could be defined, with CPU sets that placed each sub-load on
+its own socket. Then, a third sub-load could have a CPU set encompassing
+both sockets. These CPU sets can be managed at two levels: individually,
+with custom masks for each sub-load; or at the load level, by dividing
+the available CPU cores up based on the number of sub-loads and a user
+specified pattern (block or round robin). More detailed description of
+these load parameters are given below.
+
+The load file allows the user to set the following general parameters
+for each load:
+
+\begin{description}
+	\item [Run Time] This allows the user to specify how long they would like an individual load to run for.
+	\item [CPU Set Type] This parameter has three different options: 
+	\begin{enumerate}
+		\item Block: This sets the CPU masks such that each
+		sub-load is assigned a set of adjacent CPU cores. For
+		example: A node with 12 CPUs and 3 CPU sets will have
+		an affinity mask which looks as follows:
+
+\begin{verbatim}
+SET     CPU(s)
+ 0      0  1  2  3
+ 1      4  5  6  7
+ 2      8  9 10 11
+\end{verbatim}
+
+		\item Round Robin: This sets the affinities in the
+		classic round robin distribution. For example: A node
+		with 12 CPUs and 3 CPU sets will have an affinity mask
+		which looks as follows:
+
+\begin{verbatim}
+SET     CPU(s)
+ 0      0  3  6  9
+ 1      1  4  7 10
+ 2      2  5  8 11
+\end{verbatim}
+
+		\item Sub-load Specific: This option allows the user to
+		specify exactly which cores are to be put in each CPU
+		set. This allows for a very low level of control when it
+		comes to which CPUs run a specific set of modules. To use
+		this affinity type the individual masks for each CPU set
+		must be specified within the associated sub-load. This
+		can be used to set more unbalanced loads:
+
+\begin{verbatim}
+SET     CPU(s)
+ 0      8 9
+ 1      1 2 3 4 5 6 7
+ 2      0
+\end{verbatim}
+
+	\end{enumerate}
+\end{description}
+
+In addition to the general parameters that apply to the entire load,
+the load can also contain any number of sub-loads, each possessing
+several other pieces of information associated with that sub-load:
+
+\begin{description}
+	\item [Copies] A single number in each sub-load determines how
+	many distinct copies of that sub-load should be run as part of
+	running the full load. This allows the file to be more concise
+	when repetition occurs in the load. 
+	\item [CPU Set Mask] This is a list of CPU cores that should be
+	included in the sub-load's CPU set (if the load's CPU set type
+	is sub-load specific). If there are any copies of the load,
+	a CPU set mask should be specified for each copy.
+\end{description}
+
+Also, each sub-load will contain one or more plans, each of which has its own parameters:
+
+\begin{description}
+	\item [Copies] For the same reason that sub-loads can specify
+	copies, a single parameter in a plan specifies the number of
+	copies of that plan are in the sub-load.
+	\item [Load Module] Ultimately, most of SystemBurn's work is
+	performed by load modules (see the next section, Modules). Each
+	plan contains the name of a single module for it to run.
+	\item [Load Module Parameters] Each load module takes some kind
+	of input parameter(s). Thus, each plan requires values that
+	serve as the input parameters for the specific module used.
+	Note: plans accept a parameter for the amount of memory the 
+	plan should use. This can be specified by the size followed by
+	the byte prefix; i.e. MB, KB, GB ... ; m,k,g,p,t, and e work as well.
+
+\end{description}
+
+The amount of customization available within the load files should allow
+SystemBurn to emulate a vast array of different application stresses. The
+run time parameter can be altered to run several different modules
+in a short amount of time, or a few modules for a very long period of
+time. The number of CPU sets and the different affinity types allow the
+user to bind threads to specific CPUs or to have unbound threads float
+over the entire node. A combination of these 2 extremes is also possible.
+
+The syntax of the load files is based on a collection of keywords,
+each specifying a certain function. Each keyword is then followed by
+the necessary arguments (if any) on the same line.
+
+\begin{description}
+	\item [LOAD\_START] This keyword signals the beginning of a load entry within the file. It can be replaced with an opening brace: \verb!"{"!.
+	\item [RUNTIME] Specifies a run time value (in seconds) for the load as an integer immediately following the keyword.
+	\item [SCHEDULE] Specifies a CPU set type from the three options described above, using these keywords: \verb!BLOCK!, \verb!ROUND_ROBIN!, or \verb!SUBLOAD_SPECIFIC!.
+	\item [SUBLOAD] Acts as a header to a sub-load, indicates the number of copies of the next sub-load as an integer following the keyword.
+	\item [SUB\_START] Begins a sub-load entry, within a load entry. It can be replaced with an opening square bracket: \verb!"["!.
+	\item [PLAN] Starts a plan entry. Immediately followed by the number of copies, the module name, and all module parameters.
+	\item [MASK] Specifies a CPU set, and is followed by any number of integer core numbers to be associated with the current sub-load. This keyword is only used when \verb!SUBLOAD_SPECIFIC! is the CPU set type. Also, If a sub-load has multiple copies, the \verb!MASK! keyword must be used multiple times: one for each copy.
+	\item [SUB\_END] Ends a sub-load entry. It can be replaced with a closing square bracket: \verb!"]"!.
+	\item [LOAD\_END] Signals the end of a load entry, and can be replaced with a closing brace: \verb!"}"!.
+\end{description}
+
+Below is a template for a load file used by SystemBurn. 
+
+\begin{verbatim}
+LOAD_START
+        # GENERAL INFORMATION
+        RUNTIME <# of seconds>
+
+        # Affinity Type
+        SCHEDULE <BLOCK, ROUND_ROBIN, or SUBLOAD_SPECIFIC>
+
+        # SUBLOADS (Specify different loads for different cpu sets)
+
+        SUBLOAD <# of copies>
+        # Number of cpu sets to run this subload on
+        SUB_START
+                PLAN <# of copies> <module> <module parameters...>
+                ...
+
+                MASK <cpu cores...>
+        SUB_END
+
+        ...
+
+LOAD_END
+\end{verbatim}
+
+Example Load File 1:
+\begin{verbatim}
+LOAD_START
+        # 16 core system
+        RUNTIME 60
+        SCHEDULE SUBLOAD_SPECIFIC
+
+        SUBLOAD 3
+        SUB_START
+                PLAN 2 GUPS 25m
+                PLAN 1 DSTRIDE 1000000m
+                PLAN 1 FFT2D 3000m
+
+                MASK 0 2 4 6
+                MASK 1 3 5 7
+                MASK 8 9 10 11
+        SUB_END
+
+        SUBLOAD 1
+        SUB_START
+                PLAN 2 FFT1D  1000000Mb
+                PLAN 1 GUPS 24M
+                PLAN 1 GUPS 26m
+
+                MASK 12 13 14 15
+        SUB_END
+LOAD_END
+\end{verbatim}
+
+Example Load File 2:
+\begin{verbatim}
+{
+        # simple load for a four socket system with 8 cores per socket
+        # each socket runs 4 smaller PV1 loads and 4 larger PV2 loads
+        RUNTIME 450
+        SCHEDULE BLOCK
+        SUBLOAD 4
+        [
+                PLAN 4 PV1  800m
+                PLAN 4 PV2 1600m
+        ]
+}
+\end{verbatim}
+
+

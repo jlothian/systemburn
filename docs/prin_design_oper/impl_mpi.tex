@@ -1,0 +1,26 @@
+\subsection{Communication and Control}
+
+While SystemBurn uses PThreads for most of the "heavy lifting" parallelism,
+a message passing style framework is used for control, coordination, and
+communication between nodes. This function is served by MPI or SHMEM. All
+of SystemBurn's communication is executed within the context of the scheduler
+thread on each node to accommodate those MPI implementations which do not
+permit multiple PThreads to concurrently call MPI communication routines.
+MPI or SHMEM is used for the following tasks:
+
+\begin{itemize}
+	\item broadcasting of command line and configuration file input
+	\item broadcasting of load information
+	\item collection and reduction of temperature data
+	\item collection and reduction of error flag data
+	\item collection and reduction of load performance data
+	\item a simple communication load to stress the nodes' NICs
+\end{itemize}
+
+\subsubsection{Rationale:}
+MPI was initially chosen to maximize the initial portability and market 
+acceptance with the intention that the simple communications constructs 
+used could be easily substituted with OpenSHMEM equivalents by 
+conditional compilation, once OpenSHMEM is available and stable. The 
+system was then extended to use SGI and Cray style SHMEM, which closely
+resemble the OpenSHMEM API.

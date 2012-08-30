@@ -1,0 +1,32 @@
+#!/bin/bash
+#PBS -A STF006
+#PBS -N SystemBurn
+#PBS -l size=160
+#PBS -l walltime=02:00:00
+#PBS -l gres=widow2
+#PBS -l feature=gpu
+#PBS -j eo
+
+set -x
+
+module load cudatoolkit
+
+export NRANKS=$(($PBS_NNODES/8))
+export JOBTIME=`date +%Y.%m.%d__%H:%M`
+export WORKDIR=/lustre/widow2/scratch/$USER
+export INSTDIR=~/DEVTREE/systemburn
+
+mkdir -p ${WORKDIR}/SystemBurn.${JOBTIME}
+
+cd ${INSTDIR}
+cp systemburn load1 load2 load3 systemburn.config ${WORKDIR}/SystemBurn.${JOBTIME}
+
+cd ${WORKDIR}/SystemBurn.${JOBTIME}
+aprun -n ${NRANKS} -S1 -d8 ./systemburn -c 4096 load1 load2 load3
+
+ls -l
+cd ..
+rm -rf SystemBurn.${JOBTIME}
+
+exit 0
+

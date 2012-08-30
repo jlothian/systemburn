@@ -1,0 +1,102 @@
+
+This is a collection of Frequently Asked Questions pertaining to the systemburn benchmark
+Please add and edit as you see fit. 
+
+Q: What are the requirements/dependencies for building SystemBurn?
+A: Basic requirements are a either a working MPI compiler or a
+   working SHMEM compiler.  Additionally, the following requirements are
+   plan-specific:
+     Plan    Requirement
+     ----------------------
+     fftw*   fftw3 library
+     *gemm*  C BLAS library (GSL works well here)
+     *cublas CUDA SDK
+
+Q: How many MPI ranks or SHMEM PEs should I place on each shared memory node of my system?
+A: One. SystemBurn is a hybrid parallel program. MPI or SHMEM is used between nodes to
+   coordinate and control operation across a cluster or MPP. However, on an individual
+   node, Pthreads are used to control local parallelism and coordination. Placing more
+   than one MPI rank or SHMEM PE on each node will cause problems with load placement
+   and (likely) oversubscription of resources.
+
+
+Q: What modules do we plan on adding in the near future? 
+A: Possibly a program which can cut power to a core or slow cycles. 
+   We also are interested in a 3D fast fourier transform 
+   and some integer benchmarks. We wrote systemburn 
+   with the future in mind. This means that adding new  
+   modules is easy to do. We plan to eventually have a 
+   very large selection of modules which, when combined, will have
+   the ability to simulate the stress of real world HPC applications. 
+
+
+Q: How does a specific set of modules get passed to the program?
+A: We use a load file which is to be filled out by the
+   user. This load file gives the user several general options 
+   such as the ability to run the load for a set amount of time and 
+   a set number of times. It also lets the user specify "subloads"
+   which allows a different set of modules to be run on different 
+   core sets all on the same node. In addition, the load file 
+   allows the user to specify how the specific cores within a 
+   core set are tied to a set of modules. This allows for greater
+   control of how the modules are spread over a node. 
+
+
+Q: Are you able to run different load files for different nodes or sets of nodes?
+A: Currently, our solution to this problem is to create different load files
+   for each different set of nodes. Systemburn can then be run on each 
+   set of nodes simultaniously by submitting the jobs appropriately.  
+
+
+Q: How are the benchmarks distributed to the machine? 
+A: We are using pthreads to hand off different modules to different
+   parts of an individual node. We have the ability to assign modules
+   to individual cores, as well as a specific block of cores.
+
+
+Q: What other types of threads are you using in systemburn?
+A: We have a designated thread which is in charge of scheduling jobs
+   and reporting any errors, flags, which occur during this process. 
+   We also have a monitor thread which will be used to monitor the
+   temperatures of the nodes within the system. We will also include 
+   threads to test the network, the I/O and any accelerators in the 
+   system. All of the threads listed above are "unbound" in that 
+   they will not be set to run on any set of cores, but will be free 
+   to run on any core within the node.   
+
+
+Q: If systemburn is running and the machine fails, gets over worked
+   and locks up, how will I know what load pushed the machine 
+   to fail?
+A: We have designed a system of flags which are meant to record events
+   which could lead to a software or hardware failure. These flags are
+   collected periodically while a load is running and their sum values
+   are reported to the terminal. We have also programmed for the current 
+   load, and subload, to be printed to the terminal every time they are
+   changed. 
+
+Q: What modules must be loaded to build on a Cray XT?
+A: The following are required to build:
+	module purge
+	module purge
+	module load modules
+	module load Base-opts
+	module load DefApps
+	module load PrgEnv-gnu
+	module load xt-mpich2
+	module load xt-shmem
+	module load xt-asyncpe
+	module load pmi
+	module load atp
+	module load xt-libsci
+	module load fftw
+	module load cudatoolkit
+	module load gsl
+    And these are required for git and joblaunch
+	module load git
+	module load moab
+	module load torque
+
+Q: The docs/html and docs/man directories are empty?
+A: From systemburn's main directory, run
+	doxygen Doxyfile
