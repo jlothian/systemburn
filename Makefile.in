@@ -12,7 +12,6 @@ ABSOLUTE_PATH = @CONFIG_PROJECT_DIR@
 SRC_DIR  = src
 PLAN_DIR  = planlib
 BUILD_DIR = build
-TEST_DIR  = tests
 # Set VPATH to search these directories for .c files
 VPATH = $(SRC_DIR):$(PLAN_DIR)
 
@@ -69,7 +68,4 @@ clean: depclean
 clobber: clean
 	rm -f systemburn
 	rmdir $(BUILD_DIR)
-
-# Pre-built test loads
-include $(TEST_DIR)/module.mk
 
