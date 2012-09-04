@@ -2,7 +2,7 @@
 dnl
 dnl Process this file with autoconf to produce a configure script
 dnl
-AC_INIT(SystemBurn,1.0.3)
+AC_INIT(SystemBurn,1.0.4)
 
 dnl
 dnl Determine source and build directories

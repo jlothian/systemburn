@@ -65,6 +65,7 @@ depclean:
 	rm -f build/*.d
 clean: depclean
 	rm -f build/*.o
+	rm -f systemburn
 clobber: clean
 	rm -f systemburn
 	rmdir $(BUILD_DIR)
