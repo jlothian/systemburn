@@ -32,6 +32,13 @@ inline void handle_PAPI_error(int val){
     //exit(1);
 }
 
+inline void PAPIRes_init(long long *results){
+    int i;
+
+    for(i=0; i<NUM_PAPI_EVENTS; i++){
+        results[i] = 0LL;
+    }   
+}
 
 /*
  * Functions for performance measurement and calculation.

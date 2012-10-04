@@ -88,7 +88,8 @@ extern pthread_rwlock_t perf_data_lock [];
 //    long long event_count[NUM_PAPI_EVENTS];
 //} PAPI_Results;
 
-extern inline void handle_PAPI_error(int val);
+extern void handle_PAPI_error(int val);
+extern void PAPIRes_init(long long *result);
 extern long long PAPI_Data [][NUM_PAPI_EVENTS];
 /* END PAPI */
 

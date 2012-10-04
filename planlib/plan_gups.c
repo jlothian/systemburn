@@ -107,6 +107,7 @@ int  initGUPSPlan(void *plan) {
                 
                 retval = PAPI_add_events(p->PAPI_EventSet, PAPI_Events, NUM_PAPI_EVENTS);
                 if(retval != PAPI_OK) handle_PAPI_error(retval);
+                PAPIRes_init(p->PAPI_Results);
                 //creat initializer for results?
 	}
 	// If the GUPS heap is valid, initialize GUPS variables.
@@ -280,6 +281,8 @@ int execGUPSPlan(void *plan) {
  * \sa killGUPSPlan
  */
 int perfGUPSPlan(void *plan) {
+        char* buffer;
+
 	int ret = ~ERR_CLEAN;
 	uint64_t opcounts[NUM_TIMERS];
 	Plan *p;
@@ -298,6 +301,11 @@ int perfGUPSPlan(void *plan) {
 		double gups = ((double)opcounts[TIMER0]/perftimer_gettime(&p->timers, TIMER0))/(1e9);
 		EmitLogfs(MyRank, 9999, "GUPS plan performance:", gups, "GUPS", PRINT_SOME);
 		EmitLog  (MyRank, 9999, "GUPS execution count :", p->exec_count, PRINT_SOME);
+		
+                //sprintf(buffer, "GUPS PAPI data : ES = %d\t R1 = %llu\t R2 = %llu\t\n", p->PAPI_EventSet, p->PAPI_Results[0], p->PAPI_Results[1]);
+                //sprintf(buffer, "GUPS PAPI data : ES = %d\t Results = %p\n", p->PAPI_EventSet, p->PAPI_Results);
+                //EmitLog  (MyRank, 9999, buffer, 0, PRINT_SOME);
+		EmitLog  (MyRank, 9999, "GUPS PAPI ES :", p->PAPI_EventSet, PRINT_SOME);
 		ret = ERR_CLEAN;
 	}
 	return ret;
