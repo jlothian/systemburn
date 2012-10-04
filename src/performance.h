@@ -89,8 +89,9 @@ extern pthread_rwlock_t perf_data_lock [];
 //} PAPI_Results;
 
 extern void handle_PAPI_error(int val);
-extern void PAPIRes_init(long long *result);
-extern long long PAPI_Data [][NUM_PAPI_EVENTS];
+extern void PAPIRes_init(long long *result, long long *times);
+extern void PAPI_table_update(int plan_id, long long *results, long long *timers);
+extern long long PAPI_Data [][2*NUM_PAPI_EVENTS];
 /* END PAPI */
 
 
@@ -106,6 +107,6 @@ extern void perf_table_maxreduce ();
 extern void perf_table_minreduce ();
 extern void perf_table_minmax_populate(void *table, int nrows, int ncols);
 extern void perf_table_minmax_print(void *table, int nrows, int ncols, int is_minimum);
-extern void perf_table_update (PerfTimers *timers, uint64_t *opcounts, int plan_id, long long *results);
+extern void perf_table_update (PerfTimers *timers, uint64_t *opcounts, int plan_id);
 
 #endif /* __PERFORMANCE_H */

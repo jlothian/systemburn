@@ -209,7 +209,7 @@ int perfFFT1Plan(void *plan) {
 		opcounts[TIMER1] = (5 * (uint64_t)d->M * FFTlog2(d->M)) * p->exec_count;
 		opcounts[TIMER2] = 0;
 		
-		perf_table_update(&p->timers, opcounts, p->name, NULL);
+		perf_table_update(&p->timers, opcounts, p->name);
 		
 		double flops_forward = ((double)opcounts[TIMER0]/perftimer_gettime(&p->timers, TIMER0))/1e6;
 		EmitLogfs(MyRank, 9999, "FFT1D plan performance:", flops_forward, "MFLOPS", PRINT_SOME);

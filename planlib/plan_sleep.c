@@ -127,7 +127,7 @@ int perfSleepPlan(void *plan) {
 		uint64_t opcount[NUM_TIMERS] = { 0, 0, 0 };
 		
 		// Don't record the time, so no print is performed...
-		// perf_table_update(&p->timers, opcount, p->name, NULL);
+		// perf_table_update(&p->timers, opcount, p->name);
 		
 		double time = perftimer_gettime(&p->timers, TIMER0);
 		EmitLogfs(MyRank, 9999, "Sleep time:", time, "Seconds", PRINT_SOME);

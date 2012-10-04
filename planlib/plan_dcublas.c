@@ -227,7 +227,7 @@ int perfDCUBLASPlan (void *plan) {
 		opcounts[TIMER1] = 0;
 		opcounts[TIMER2] = 0;
 		
-		perf_table_update(&p->timers, opcounts, p->name, NULL);
+		perf_table_update(&p->timers, opcounts, p->name);
 		
 		double flops  = ((double)opcounts[TIMER0]/perftimer_gettime(&p->timers, TIMER0))/1e6;
 		EmitLogfs(MyRank, 9999, "DCUBLAS plan performance:", flops, "MFLOPS", PRINT_SOME);

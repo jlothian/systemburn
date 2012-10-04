@@ -197,7 +197,7 @@ int perfPV1Plan (void *plan) {
 		opcounts[TIMER1] = (d->M * 4 * sizeof(double)) * p->exec_count; // Count # of bytes of memory transfered (3 r, 1 w)
 		opcounts[TIMER2] = d->M * p->exec_count;                        // Count # of floating point operations in checking loop.
 		
-		perf_table_update(&p->timers, opcounts, p->name, NULL);
+		perf_table_update(&p->timers, opcounts, p->name);
 		
 		double flops  = ((double)opcounts[TIMER0]/perftimer_gettime(&p->timers, TIMER0))/1e6;
 		double mbps   = ((double)opcounts[TIMER1]/perftimer_gettime(&p->timers, TIMER1))/1e6;

@@ -32,11 +32,12 @@ inline void handle_PAPI_error(int val){
     //exit(1);
 }
 
-inline void PAPIRes_init(long long *results){
+inline void PAPIRes_init(long long *results, long long *times){
     int i;
 
     for(i=0; i<NUM_PAPI_EVENTS; i++){
         results[i] = 0LL;
+        times[i] = 0LL;
     }   
 }
 
@@ -132,7 +133,7 @@ pthread_rwlock_t perf_data_lock [NUM_PLANS];
 
 
 /* PAPI data structure */
-long long PAPI_Data [NUM_PLANS][NUM_PAPI_EVENTS]; 
+long long PAPI_Data [NUM_PLANS][2*NUM_PAPI_EVENTS]; 
 
 
 
@@ -188,7 +189,8 @@ void perf_table_init () {
 		}
                 /* Initialize PAPI data structure */
                 for(j = 0; j < NUM_PAPI_EVENTS; j++){
-                    PAPI_Data[i][j] = 0LL;
+                    PAPI_Data[i][2*j] = 0LL;
+                    PAPI_Data[i][2*j+1] = 0LL;
                 }
 		pthread_rwlock_init(&perf_data_lock[i],0);
 	}
@@ -206,6 +208,8 @@ void perf_table_print (int scope_flag, int print_priority) {
 		int i, j, k;
 		char line[150], temp[128], prefixes[] = " kMGTPE";
 		double timer, opcount, max, min;
+
+                double event_per_sec;
 		
 		// Print the appropriate header to the table.
 		if (scope_flag == LOCAL) {
@@ -273,8 +277,10 @@ void perf_table_print (int scope_flag, int print_priority) {
 
                         /* Simple PAPI results print - add to main print loop */
                         for(j=0; j<NUM_PAPI_EVENTS; j++){
-                            if(PAPI_Data[i][j] > 0LL)
-                                printf("PAPI val #%d: %llu\n", j, PAPI_Data[i][j]);
+                            if(PAPI_Data[i][2*j] > 0LL && PAPI_Data[i][2*j+1] > 0LL){
+                                event_per_sec = PAPI_Data[i][2*j]/(double)PAPI_Data[i][2*j+1]*(1e-3);
+                                printf("PAPI val #%d: %f\n", j, event_per_sec);
+                            }
                         }
 
 		}
@@ -407,7 +413,7 @@ void perf_table_minmax_print(void *table, int nrows, int ncols, int is_minimum) 
  * \param [in] opcounts Contains the operation counts for the execution sections of the plan, corresponding to the timer counts.
  * \param [in] plan_id Identifies the plan whose table entry should be updated.
  */
-void perf_table_update (PerfTimers *timers, uint64_t *opcounts, int plan_id, long long *results) {
+void perf_table_update (PerfTimers *timers, uint64_t *opcounts, int plan_id) {
 	int i, retval;
 	uint64_t perf_count[2*NUM_TIMERS];
 	
@@ -421,14 +427,17 @@ void perf_table_update (PerfTimers *timers, uint64_t *opcounts, int plan_id, lon
 		perf_data_dbl[plan_id][i] += (double)perf_count[i];
 	}
 
-        /* Update PAPI data structure */
-        if(results){
-            for(i=0; i<NUM_PAPI_EVENTS; i++){
-                PAPI_Data[plan_id][i] += results[i];
-            }
-        }
-        //retval = PAPI_accum(PAPI_EventSet, PAPI_Data[plan_id]);
-        //if(retval != PAPI_OK) handle_PAPI_error(retval);
+        pthread_rwlock_unlock(&perf_data_lock[plan_id]);
+}
 
+void PAPI_table_update(int plan_id, long long *results, long long *timers){
+        int i;
+
+	pthread_rwlock_wrlock(&perf_data_lock[plan_id]);
+        /* Update PAPI data structure */
+        for(i=0; i<NUM_PAPI_EVENTS; i++){
+            PAPI_Data[plan_id][2*i] += results[i];
+            PAPI_Data[plan_id][2*i+1] += timers[i];
+        }
         pthread_rwlock_unlock(&perf_data_lock[plan_id]);
 }

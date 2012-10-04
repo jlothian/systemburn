@@ -207,7 +207,7 @@ int perfDStridePlan (void *plan) {
 		opcounts[TIMER1] = ((2 * count * REPEAT) + (1 * 10 * REPEAT)) * p->exec_count; // Count memory accesses.
 		opcounts[TIMER2] = 0;
 		
-		perf_table_update(&p->timers, opcounts, p->name, NULL);
+		perf_table_update(&p->timers, opcounts, p->name);
 		
 		double flops = ((double)opcounts[TIMER0]/perftimer_gettime(&p->timers, TIMER0))/1e6;
 		double mbps  = ((double)opcounts[TIMER1]/perftimer_gettime(&p->timers, TIMER1))/1e6;
