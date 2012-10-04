@@ -162,7 +162,7 @@ int perfYOUR_NAMEPlan(void *plan) {
 		// indices correspond with the timers used in the exec function.
 		opcount[TIMER0] = p->exec_count * YOUR_OPERATIONS_PER_EXECUTION; // Where operations can be a function of the input size.
 		
-		perf_table_update(&p->timers, opcounts, p->name);  // Updates the global table with the performance data.
+		perf_table_update(&p->timers, opcounts, p->name, NULL);  // Updates the global table with the performance data.
 		
 		double flops  = ((double)opcounts[TIMER0]/perftimer_gettime(&p->timers, TIMER0))/1e6;  // Example for computing MFLOPS
 		EmitLogfs(MyRank, 9999, "YOUR_PLAN plan performance:", flops, "MFLOPS", PRINT_SOME);           // Displays calculated performance when the '-v2' command line option is passed.

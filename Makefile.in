@@ -12,6 +12,8 @@ ABSOLUTE_PATH = @CONFIG_PROJECT_DIR@
 SRC_DIR  = src
 PLAN_DIR  = planlib
 BUILD_DIR = build
+PAPI_DIR = papi
+PAPI_LIB = $(PAPI_DIR)/libpapi.a
 # Set VPATH to search these directories for .c files
 VPATH = $(SRC_DIR):$(PLAN_DIR)
 
@@ -21,7 +23,8 @@ ENABLE_FFTW = @ENABLE_FFTW@
 ENABLE_CUDA = @ENABLE_CUDA@
 
 # Search paths for the header files
-INCLUDES = -I$(SRC_DIR) -I$(PLAN_DIR) -I.
+#INCLUDES = -I$(SRC_DIR) -I$(PLAN_DIR) -I.
+INCLUDES = -I$(SRC_DIR)  -I$(PLAN_DIR) -I. -I$(PAPI_DIR)
 
 # Include makefile modules
 include $(SRC_DIR)/module.mk
@@ -44,7 +47,7 @@ MAKEDEP := $(DEPC) -MM
 .DEFAULT: all
 all: systemburn
 systemburn: build_dir $(ALL_OBJS)
-	$(MPICC) $(CFLAGS) $(INCLUDES) $(LDFLAGS) $(LIBS) -o systemburn $(ALL_OBJS) 
+	$(MPICC) $(CFLAGS) $(INCLUDES) $(LDFLAGS) $(LIBS) -o systemburn $(ALL_OBJS) $(PAPI_LIB)
 build_dir:
 	mkdir -p $(BUILD_DIR)
 $(BUILD_DIR)/%.o: %.c

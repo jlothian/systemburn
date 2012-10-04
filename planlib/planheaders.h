@@ -65,15 +65,19 @@
  * for the plan and a pointer to an opaque heap structure allocated by
  * this plan instantiation for its use.
  */
-typedef struct {                        /* Plan struct allocated/initialized by a makeXXXPlan() */
-	int   (*fptr_initplan)(void*);  /**< Points to a function for initializing plan data.         */
-	int   (*fptr_execplan)(void*);  /**< Executes the plan with data from the init function.      */
-	int   (*fptr_perfplan)(void*);  /**< Stores and displays performance data from the plan.      */
-	void* (*fptr_killplan)(void*);  /**< Cleans up after the plan and returns performance data.   */
-	void* vptr;                     /**< Pointer to the plan's specialized heap.                  */
-	int   name;                     /**< Stores the plan ID number for reference.                 */
-	PerfTimers timers;              /**< Contains pairs of time stamps for measuring performance. */
-	uint64_t exec_count;            /**< Stores the number of times the exec function is called.  */
+typedef struct {                         /* Plan struct allocated/initialized by a makeXXXPlan() */
+	int   (*fptr_initplan)(void*);   /**< Points to a function for initializing plan data.         */
+	int   (*fptr_execplan)(void*);   /**< Executes the plan with data from the init function.      */
+	int   (*fptr_perfplan)(void*);   /**< Stores and displays performance data from the plan.      */
+	void* (*fptr_killplan)(void*);   /**< Cleans up after the plan and returns performance data.   */
+	void* vptr;                      /**< Pointer to the plan's specialized heap.                  */
+	int   name;                      /**< Stores the plan ID number for reference.                 */
+	PerfTimers timers;               /**< Contains pairs of time stamps for measuring performance. */
+	uint64_t exec_count;             /**< Stores the number of times the exec function is called.  */
+
+        int PAPI_EventSet;                        /* Holds the PAPI event set for this plan (?)        */
+        //long long * PAPI_Results;               /* Holds the values collected from the PAPI counters */
+        long long PAPI_Results [NUM_PAPI_EVENTS]; /* Holds the values collected from the PAPI counters */
 } Plan;
 
 /**

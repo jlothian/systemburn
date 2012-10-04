@@ -29,6 +29,10 @@
 #include <config.h>
 #include <orbtimer.h>
 
+/* PAPI header */
+#include <papi.h>  
+
+
 /**
  * \brief Indices for use with the performance timers.
  * \sa PerfTimers
@@ -71,6 +75,25 @@ extern double           perf_data_dbl  [][2*NUM_TIMERS];
 extern char *           perf_data_unit [][NUM_TIMERS];
 extern pthread_rwlock_t perf_data_lock [];
 
+
+
+/* PAPI specific functions and variables */
+//enum{ NUM_PAPI_EVENTS = 2 };
+//int PAPI_Events [NUM_PAPI_EVENTS] = { PAPI_FP_INS, PAPI_TOT_CYC };
+
+#define NUM_PAPI_EVENTS 2
+#define PAPI_COUNTERS { PAPI_FP_INS, PAPI_TOT_CYC } //PAPI_SR_INS }
+
+//typedef struct {
+//    long long event_count[NUM_PAPI_EVENTS];
+//} PAPI_Results;
+
+extern inline void handle_PAPI_error(int val);
+extern long long PAPI_Data [][NUM_PAPI_EVENTS];
+/* END PAPI */
+
+
+
 /*
  * Functions for performance data retrieval and analysis.
  */
@@ -82,7 +105,6 @@ extern void perf_table_maxreduce ();
 extern void perf_table_minreduce ();
 extern void perf_table_minmax_populate(void *table, int nrows, int ncols);
 extern void perf_table_minmax_print(void *table, int nrows, int ncols, int is_minimum);
-extern void perf_table_update (PerfTimers *timers, uint64_t *opcounts, int plan_id);
+extern void perf_table_update (PerfTimers *timers, uint64_t *opcounts, int plan_id, long long *results);
 
 #endif /* __PERFORMANCE_H */
-

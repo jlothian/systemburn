@@ -226,7 +226,7 @@ int perfSCUBLASPlan (void *plan) {
 		opcounts[TIMER1] = M2 * 2;
 		opcounts[TIMER2] = 0;
 		
-		perf_table_update(&p->timers, opcounts, p->name);
+		perf_table_update(&p->timers, opcounts, p->name, NULL);
 		
 		double flops  = ((double)opcounts[TIMER0]/perftimer_gettime(&p->timers, TIMER0))/1e6;
 		EmitLogfs(MyRank, 9999, "SCUBLAS plan performance:", flops, "MFLOPS", PRINT_SOME);

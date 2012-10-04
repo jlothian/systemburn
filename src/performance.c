@@ -23,6 +23,16 @@
 #include <performance.h>
 #include <comm.h>
 
+/* Helper function to handle PAPI errors */
+inline void handle_PAPI_error(int val){
+    char* message;
+
+    sprintf(message, "PAPI error %d: %s\n", val, PAPI_strerror(val));
+    EmitLog(MyRank, SCHEDULER_THREAD, message, -1, PRINT_ALWAYS);
+    //exit(1);
+}
+
+
 /*
  * Functions for performance measurement and calculation.
  */
@@ -113,6 +123,12 @@ char *           perf_data_unit [NUM_PLANS][NUM_TIMERS];
  */
 pthread_rwlock_t perf_data_lock [NUM_PLANS];
 
+
+/* PAPI data structure */
+long long PAPI_Data [NUM_PLANS][NUM_PAPI_EVENTS]; 
+
+
+
 /*
  * Functions for performance data retrieval and analysis.
  */
@@ -123,9 +139,31 @@ pthread_rwlock_t perf_data_lock [NUM_PLANS];
  * table for storing performance data.
  */
 void performance_init () {
+        int retval;
+
 	if (MyRank == ROOT) EmitLog(MyRank, SCHEDULER_THREAD, "Calibrating performance timers.", -1, PRINT_ALWAYS);
 	ORB_calibrate();
-	perf_table_init();
+        
+        /* Initialize PAPI and PAPI threads */
+        retval = PAPI_library_init(PAPI_VER_CURRENT);
+        if(retval != PAPI_VER_CURRENT) handle_PAPI_error(retval);
+
+        retval = PAPI_thread_init(pthread_self);
+        if(retval != PAPI_OK) handle_PAPI_error(retval);
+
+        /*
+        retval = PAPI_create_eventset(&PAPI_EventSet);
+        if(retval != PAPI_OK) handle_PAPI_error(retval);
+
+        retval = PAPI_add_events(PAPI_EventSet, PAPI_Events, NUM_PAPI_EVENTS);
+        if(retval != PAPI_OK) handle_PAPI_error(retval);
+
+        retval = PAPI_start(PAPI_EventSet);
+        if(retval != PAPI_OK) handle_PAPI_error(retval);
+        */
+
+        /* Initialize performance tables */
+        perf_table_init();
 }
 
 /**
@@ -141,6 +179,10 @@ void perf_table_init () {
 		for (j = 0; j < NUM_TIMERS; j++) {
 			perf_data_unit[i][j] = plan_list[i]->perf_units[j];
 		}
+                /* Initialize PAPI data structure */
+                for(j = 0; j < NUM_PAPI_EVENTS; j++){
+                    PAPI_Data[i][j] = 0LL;
+                }
 		pthread_rwlock_init(&perf_data_lock[i],0);
 	}
 }
@@ -151,6 +193,7 @@ void perf_table_init () {
  * \param [in] scope_flag Determines whether to print performance data from the local node or aggregate data from all nodes.
  * \param [in] print_priority Used to determine the verbosity level required to activate the print.
  */
+/* Need PAPI here, to diplay - keep it simple stupid */
 void perf_table_print (int scope_flag, int print_priority) {
 	if (print_priority <= verbose_flag) {
 		int i, j, k;
@@ -220,6 +263,13 @@ void perf_table_print (int scope_flag, int print_priority) {
 			if (k >= 0) {
 				printf("PERF:\t %-8s %s\n", plan_list[i]->name, line);
 			}
+
+                        /* Simple PAPI results print - add to main print loop */
+                        for(j=0; j<NUM_PAPI_EVENTS; j++){
+                            if(PAPI_Data[i][j] > 0LL)
+                                printf("PAPI val #%d: %llu\n", j, PAPI_Data[i][j]);
+                        }
+
 		}
 		printf("\n");
 	}
@@ -350,8 +400,8 @@ void perf_table_minmax_print(void *table, int nrows, int ncols, int is_minimum) 
  * \param [in] opcounts Contains the operation counts for the execution sections of the plan, corresponding to the timer counts.
  * \param [in] plan_id Identifies the plan whose table entry should be updated.
  */
-void perf_table_update (PerfTimers *timers, uint64_t *opcounts, int plan_id) {
-	int i;
+void perf_table_update (PerfTimers *timers, uint64_t *opcounts, int plan_id, long long *results) {
+	int i, retval;
 	uint64_t perf_count[2*NUM_TIMERS];
 	
 	for (i = 0; i < NUM_TIMERS; i++) {
@@ -363,5 +413,15 @@ void perf_table_update (PerfTimers *timers, uint64_t *opcounts, int plan_id) {
 		perf_data_int[plan_id][i] += perf_count[i];
 		perf_data_dbl[plan_id][i] += (double)perf_count[i];
 	}
-	pthread_rwlock_unlock(&perf_data_lock[plan_id]);
+
+        /* Update PAPI data structure */
+        if(results){
+            for(i=0; i<NUM_PAPI_EVENTS; i++){
+                PAPI_Data[plan_id][i] += results[i];
+            }
+        }
+        //retval = PAPI_accum(PAPI_EventSet, PAPI_Data[plan_id]);
+        //if(retval != PAPI_OK) handle_PAPI_error(retval);
+
+        pthread_rwlock_unlock(&perf_data_lock[plan_id]);
 }

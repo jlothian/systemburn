@@ -220,7 +220,7 @@ int perfPV4Plan (void *plan) {
 		opcounts[TIMER1] = (times * 5 * sizeof(double)) * p->exec_count; // Count # of bytes of memory transfered (4 r, 1 w)
 		opcounts[TIMER2] = 0;
 		
-		perf_table_update(&p->timers, opcounts, p->name);
+		perf_table_update(&p->timers, opcounts, p->name, NULL);
 		
 		double trips  = ((double)opcounts[TIMER0]/perftimer_gettime(&p->timers, TIMER0))/1e6;
 		double mbps   = ((double)opcounts[TIMER1]/perftimer_gettime(&p->timers, TIMER1))/1e6;

@@ -245,7 +245,7 @@ int perfDStreamPlan (void *plan) {
 		opcounts[TIMER1] = (2 + 2 + 3 + 3) * sizeof(double) * d->M * p->exec_count; // Count # of bytes transferred to and from memory
 		opcounts[TIMER2] = (3 * d->M + 7) * p->exec_count;                          // FLOPs count for checking stage (needs work...)
 		
-		perf_table_update(&p->timers, opcounts, p->name);
+		perf_table_update(&p->timers, opcounts, p->name, NULL);
 		
 		double flops = ((double)opcounts[TIMER0]/perftimer_gettime(&p->timers, TIMER0))/1e6;
 		double mbps  = ((double)opcounts[TIMER1]/perftimer_gettime(&p->timers, TIMER1))/1e6;

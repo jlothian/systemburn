@@ -86,7 +86,11 @@ void * makeGUPSPlan(data *m) {
 */
 int  initGUPSPlan(void *plan) {
 	int i;
+        int retval;
 	int ret = make_error(ALLOC,generic_err);
+
+        int PAPI_Events [NUM_PAPI_EVENTS] = PAPI_COUNTERS;
+
 	Plan *p;
 	GUPSdata *d = NULL;
 	p = (Plan *)plan;
@@ -95,6 +99,15 @@ int  initGUPSPlan(void *plan) {
 		d = (GUPSdata*)p->vptr;
 		p->exec_count = 0;
 		perftimer_init(&p->timers, NUM_TIMERS);
+
+                /* Initialize plan's PAPI data */
+                p->PAPI_EventSet = PAPI_NULL;
+                retval = PAPI_create_eventset(&p->PAPI_EventSet);
+                if(retval != PAPI_OK) handle_PAPI_error(retval);
+                
+                retval = PAPI_add_events(p->PAPI_EventSet, PAPI_Events, NUM_PAPI_EVENTS);
+                if(retval != PAPI_OK) handle_PAPI_error(retval);
+                //creat initializer for results?
 	}
 	// If the GUPS heap is valid, initialize GUPS variables.
 	if (d) {
@@ -135,6 +148,8 @@ int  initGUPSPlan(void *plan) {
  * \sa perfGUPSPlan
  */
 void * killGUPSPlan(void *plan) {
+        int retval;
+
 	Plan *p;
 	GUPSdata *d;
 	p = (Plan *)plan;
@@ -145,6 +160,10 @@ void * killGUPSPlan(void *plan) {
 	if(d->tbl) free((void*)(d->tbl));
 	if(d->sub) free((void*)(d->sub));
 	if(d->random) free((void*)(d->random));
+
+        //retval = PAPI_stop(p->PAPI_EventSet, NULL);  //don't know if this will work
+        //if(retval != PAPI_OK) handle_PAPI_error(retval);
+
 	free((void*)(d));
 	free((void*)(p));
 	return (void*)NULL;
@@ -161,6 +180,9 @@ void * killGUPSPlan(void *plan) {
  * \sa killGUPSPlan
  */
 int execGUPSPlan(void *plan) {
+        /* PAPI vars */
+        int retval;
+
 	/* local vars */
 	int64_t i,j;
 	uint64_t tblsize,lsubsize,nupdates;
@@ -179,13 +201,21 @@ int execGUPSPlan(void *plan) {
 	tblsize = d->tbl_size;
 	lsubsize = d->sub_log_size;
 	nupdates = d->num_updates;
+
 	/* increment execution count */
 	p->exec_count++;
+
 	/* initialize random array */
 	for (i = 0; i < RSIZE; i++)
 		ran[i] = GUPS_startRNG((nupdates/RSIZE)*i);
-	/* perform updates to main table */
+
+
+        /* Start PAPI counters - better way to handle errors?*/
+        retval = PAPI_start(p->PAPI_EventSet);
+        if(retval != PAPI_OK) handle_PAPI_error(retval);
+
 	ORB_read(t1);
+	/* perform updates to main table */
 	for (i = 0; i < nupdates/RSIZE; i++) {
 		for (j = 0; j < RSIZE; j++) {
 			ran[j] = (ran[j] << 1) ^ ((int64_t)ran[j] < 0 ? POLY : 0);
@@ -194,6 +224,12 @@ int execGUPSPlan(void *plan) {
 	}
 	ORB_read(t2);
 	perftimer_accumulate(&p->timers, TIMER0, ORB_cycles_a(t2, t1));
+
+        /* Collect PAPI counters */
+        retval = PAPI_accum(p->PAPI_EventSet, p->PAPI_Results);
+        if(retval != PAPI_OK) handle_PAPI_error(retval);
+
+
 	/* verify results */
 	if (CHECK_CALC) {
 		uint64_t temp = 0x1;
@@ -217,9 +253,19 @@ int execGUPSPlan(void *plan) {
 		}
 		ORB_read(t2);
 		perftimer_accumulate(&p->timers, TIMER1, ORB_cycles_a(t2, t1));
+
+                /* Collect PAPI counters */
+                retval = PAPI_accum(p->PAPI_EventSet, p->PAPI_Results);
+                if(retval != PAPI_OK) handle_PAPI_error(retval);
+
 		if(errflag==1)
 			ret = make_error(CALC,generic_err);
 	}
+
+        /* Stop PAPI counters */
+        retval = PAPI_stop(p->PAPI_EventSet, NULL);
+        if(retval != PAPI_OK) handle_PAPI_error(retval);
+
 	return ret;
 }
 
@@ -245,8 +291,10 @@ int perfGUPSPlan(void *plan) {
 		opcounts[TIMER1] = 0;
 		opcounts[TIMER2] = 0;
 		
-		perf_table_update(&p->timers, opcounts, p->name);
+                /* Additionally, passing PAPI_Results to be collected */
+		perf_table_update(&p->timers, opcounts, p->name, p->PAPI_Results);
 		
+                //TODO: add place to present PAPI data
 		double gups = ((double)opcounts[TIMER0]/perftimer_gettime(&p->timers, TIMER0))/(1e9);
 		EmitLogfs(MyRank, 9999, "GUPS plan performance:", gups, "GUPS", PRINT_SOME);
 		EmitLog  (MyRank, 9999, "GUPS execution count :", p->exec_count, PRINT_SOME);

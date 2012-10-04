@@ -187,7 +187,7 @@ int perfCBAPlan (void *plan) {
 		opcounts[TIMER1] = 0;
 		opcounts[TIMER2] = 0;
 		
-		perf_table_update(&p->timers, opcounts, p->name);
+		perf_table_update(&p->timers, opcounts, p->name, NULL);
 		
 		double ips  = ((double)opcounts[TIMER0]/perftimer_gettime(&p->timers, TIMER0))/1e9;
 		EmitLogfs(MyRank, 9999, "CBA plan performance:", ips, "GB/s", PRINT_SOME);
