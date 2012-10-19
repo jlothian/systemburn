@@ -81,10 +81,24 @@ int   initDCUBLASPlan(void *plan) {
 	Plan *p;
 	DCUBLASdata *d = NULL;
 	p = (Plan *)plan;
+
+        int retval;
+        int PAPI_Events [NUM_PAPI_EVENTS] = PAPI_COUNTERS;
+
 	if (p) {
 		d = (DCUBLASdata*)p->vptr;
 		p->exec_count = 0;
 		perftimer_init(&p->timers, NUM_TIMERS);
+
+                /* Initialize plan's PAPI data */
+                p->PAPI_EventSet = PAPI_NULL;
+                retval = PAPI_create_eventset(&p->PAPI_EventSet);
+                if(retval != PAPI_OK) PAPI_EmitLog(retval, MyRank, 9999, PRINT_SOME);
+                
+                retval = PAPI_add_events(p->PAPI_EventSet, PAPI_Events, NUM_PAPI_EVENTS);
+                if(retval != PAPI_OK) PAPI_EmitLog(retval, MyRank, 9999, PRINT_SOME);
+                PAPIRes_init(p->PAPI_Results, p->PAPI_Times);
+                //creat initializer for results?
 	}
 	if(d) {
 		CUDA_CALL( cudaSetDevice(d->device) );
@@ -136,13 +150,18 @@ void * killDCUBLASPlan(void *plan) {
 	DCUBLASdata *d;
 	p = (Plan *)plan;
 	d = (DCUBLASdata*)p->vptr;
-	
+        int retval;
+
 	CUDA_CALL( cudaThreadSynchronize() );
 	// if(d->DC) CUDA_CALL( cudaFree((void*)(d->DC)) );
 	if(d->DB) CUDA_CALL( cudaFree((void*)(d->DB)) );
 	if(d->DA) CUDA_CALL( cudaFree((void*)(d->DA)) );
 	if(d->HA) CUDA_CALL( cudaFreeHost((void*)(d->HA)) );
 	CUDA_CALL( cudaThreadExit() );
+
+        //retval = PAPI_stop(p->PAPI_EventSet, NULL);  //don't know if this will work
+        //if(retval != PAPI_OK) PAPI_EmitLog(retval, MyRank, 9999, PRINT_SOME);
+
 	free((void*)(d));
 	free((void*)(p));
 	return (void*)NULL;
@@ -159,6 +178,11 @@ void * killDCUBLASPlan(void *plan) {
  * \sa killDCUBLASPlan
  */
 int execDCUBLASPlan(void *plan) {
+        /* PAPI vars */
+        int retval, k;
+        long long start, end;
+
+        /* local vars */
 	int M, K, N, lda, ldb, ldc,i;
 	double *DA, *DB, *DC;
 	double alpha, beta;
@@ -178,14 +202,31 @@ int execDCUBLASPlan(void *plan) {
 	// DeviceToDevice is not async wrt the device kernels
 	// try uncommenting:
 	// CUDA_CALL( cudaMemcpyAsync( (d->DA), (d->DB), (d->arraybytes), cudaMemcpyDeviceToDevice, 0) );
+
+        /* Start PAPI counters and time */
+        retval = PAPI_start(p->PAPI_EventSet);
+        if(retval != PAPI_OK) PAPI_EmitLog(retval, MyRank, 9999, PRINT_SOME);
+        start = PAPI_get_real_usec();
+
 	ORB_read(t1);
 	for (i=0; i<(d->nLoopCount); i++)
 		// original:
 		// cublasDgemm('N', 'T', M, N, K, alpha, DA, lda, DB, ldb, beta, DC, ldc);
 		// alternate:
 		cublasDgemm('N', 'N', M, N, K, alpha, DA, lda, DB, ldb, beta, DC, ldc);
+        end = PAPI_get_real_usec(); //PAPI time
+
 	ORB_read(t2);
+
+        /* Collect PAPI counters and store time elapsed */
+        retval = PAPI_accum(p->PAPI_EventSet, p->PAPI_Results);
+        if(retval != PAPI_OK) PAPI_EmitLog(retval, MyRank, 9999, PRINT_SOME);
+        for(k=0; k<NUM_PAPI_EVENTS; k++){
+            p->PAPI_Times[k] += (end - start);
+        }
+
 	perftimer_accumulate(&p->timers, TIMER0, ORB_cycles_a(t2, t1));
+
 	// DeviceToHost is async wrt the device kernels
 	// try uncommenting:
 	// CUDA_CALL( cudaMemcpyAsync( (d->HA), (d->DA), (d->arraybytes), cudaMemcpyDeviceToHost, 0) );
@@ -228,6 +269,7 @@ int perfDCUBLASPlan (void *plan) {
 		opcounts[TIMER2] = 0;
 		
 		perf_table_update(&p->timers, opcounts, p->name);
+		PAPI_table_update(p->name, p->PAPI_Results, p->PAPI_Times);
 		
 		double flops  = ((double)opcounts[TIMER0]/perftimer_gettime(&p->timers, TIMER0))/1e6;
 		EmitLogfs(MyRank, 9999, "DCUBLAS plan performance:", flops, "MFLOPS", PRINT_SOME);

@@ -82,13 +82,12 @@ extern pthread_rwlock_t perf_data_lock [];
 //int PAPI_Events [NUM_PAPI_EVENTS] = { PAPI_FP_INS, PAPI_TOT_CYC };
 
 #define NUM_PAPI_EVENTS 2
-#define PAPI_COUNTERS { PAPI_FP_INS, PAPI_TOT_CYC } //PAPI_SR_INS }
+#define PAPI_COUNTERS { PAPI_FP_OPS, PAPI_TOT_CYC } //PAPI_SR_INS }
 
 //typedef struct {
 //    long long event_count[NUM_PAPI_EVENTS];
 //} PAPI_Results;
 
-extern void handle_PAPI_error(int val);
 extern void PAPIRes_init(long long *result, long long *times);
 extern void PAPI_table_update(int plan_id, long long *results, long long *timers);
 extern long long PAPI_Data [][2*NUM_PAPI_EVENTS];

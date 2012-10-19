@@ -107,10 +107,24 @@ int    initDStreamPlan(void *plan) {
 	Plan *p;
 	DStreamdata *d = NULL;
 	p = (Plan *)plan;
+
+        int retval;
+        int PAPI_Events [NUM_PAPI_EVENTS] = PAPI_COUNTERS;
+
 	if (p) {
 		d = (DStreamdata*)p->vptr;
 		p->exec_count = 0;
 		perftimer_init(&p->timers, NUM_TIMERS);
+
+                /* Initialize plan's PAPI data */
+                p->PAPI_EventSet = PAPI_NULL;
+                retval = PAPI_create_eventset(&p->PAPI_EventSet);
+                if(retval != PAPI_OK) PAPI_EmitLog(retval, MyRank, 9999, PRINT_SOME);
+                
+                retval = PAPI_add_events(p->PAPI_EventSet, PAPI_Events, NUM_PAPI_EVENTS);
+                if(retval != PAPI_OK) PAPI_EmitLog(retval, MyRank, 9999, PRINT_SOME);
+                PAPIRes_init(p->PAPI_Results, p->PAPI_Times);
+                //creat initializer for results?
 	}
 	if(d) {
 		M = d->M;
@@ -156,6 +170,10 @@ void * killDStreamPlan(void *plan) {
 	if(d->three) free(d->three);
 	if(d->four)  free(d->four);
 	if(d->five)  free(d->five);
+
+        //retval = PAPI_stop(p->PAPI_EventSet, NULL);  //don't know if this will work
+        //if(retval != PAPI_OK) PAPI_EmitLog(retval, MyRank, 9999, PRINT_SOME);
+
 	free(d);
 	free(p);
 	return (void*)NULL;
@@ -172,6 +190,11 @@ void * killDStreamPlan(void *plan) {
  * \sa killDStreamPlan
  */
 int execDStreamPlan(void *plan) {
+        /* PAPI vars */
+        int retval, k;
+        long long start, end;
+        //char message[512];
+
 	register int i;
 	int ret = ERR_CLEAN;
 	ORB_t t1,t2;
@@ -193,6 +216,11 @@ int execDStreamPlan(void *plan) {
                 d->random   =rand();
         }
         
+        /* Start PAPI counters and time */
+        retval = PAPI_start(p->PAPI_EventSet);
+        if(retval != PAPI_OK) PAPI_EmitLog(retval, MyRank, 9999, PRINT_SOME);
+        start = PAPI_get_real_usec();
+
         ORB_read(t1);
 	//Copy
 	for(i=0; i<d->M ;i++)
@@ -209,7 +237,19 @@ int execDStreamPlan(void *plan) {
 	//Triad
 	for(i=0; i<d->M ;i++)
 		d->one[i] = d->two[i] + d->random * d->three[i];
+        end = PAPI_get_real_usec(); //PAPI time
+
 	ORB_read(t2);
+
+        /* Collect PAPI counters and store time elapsed */
+        retval = PAPI_accum(p->PAPI_EventSet, p->PAPI_Results);
+        if(retval != PAPI_OK) PAPI_EmitLog(retval, MyRank, 9999, PRINT_SOME);
+        for(k=0; k<NUM_PAPI_EVENTS; k++){
+            p->PAPI_Times[k] += (end - start);
+            //snprintf(message, 512, "PAPI TEST: val = %llu\t time = %llu\n", p->PAPI_Results[k], p->PAPI_Times[k]);
+            //EmitLog(MyRank, 9999, message, -1, PRINT_ALWAYS);
+        }
+
 	perftimer_accumulate(&p->timers, TIMER0, ORB_cycles_a(t2, t1));
 	perftimer_accumulate(&p->timers, TIMER1, ORB_cycles_a(t2, t1));
 	
@@ -246,6 +286,8 @@ int perfDStreamPlan (void *plan) {
 		opcounts[TIMER2] = (3 * d->M + 7) * p->exec_count;                          // FLOPs count for checking stage (needs work...)
 		
 		perf_table_update(&p->timers, opcounts, p->name);
+		PAPI_table_update(p->name, p->PAPI_Results, p->PAPI_Times);
+	        //TODO: Insert some PAPI info here as well	
 		
 		double flops = ((double)opcounts[TIMER0]/perftimer_gettime(&p->timers, TIMER0))/1e6;
 		double mbps  = ((double)opcounts[TIMER1]/perftimer_gettime(&p->timers, TIMER1))/1e6;

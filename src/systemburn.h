@@ -99,6 +99,7 @@ extern void   printFlags(int **all_flags);
 extern int ** initErrorFlags();
 
 /* General purpose printing/output functions. In utility.c */
+extern void   PAPI_EmitLog(int val, int rank, int tnum, int debug);
 extern void   EmitLog(int rank, int tnum, char *text, int data, int debug);
 extern void   EmitLog3(int rank, int tnum, char *text, int data1, int data2, int data3, int debug);
 extern void   EmitLog3f(int rank, int tnum, char *text, float data1, float data2, float data3, int debug);

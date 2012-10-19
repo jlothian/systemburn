@@ -21,6 +21,15 @@
 #include <systemburn.h>
 #include <initialization.h>
 
+/* Helper function to handle PAPI errors */
+inline void PAPI_EmitLog(int val, int rank, int tnum, int debug){
+    char message[512];
+
+    snprintf(message, 512, "PAPI error %d: %s\n", val, PAPI_strerror(val));
+    EmitLog(rank, tnum, message, -1, PRINT_ALWAYS);
+    //exit(1);
+}
+
 /** \brief Outputs given info to stdout in order to let the user know what is going on.
  \param rank The rank of the calling thread
  \param tnum The thread number of the calling thread

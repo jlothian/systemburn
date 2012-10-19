@@ -23,15 +23,7 @@
 #include <performance.h>
 #include <comm.h>
 
-/* Helper function to handle PAPI errors */
-inline void handle_PAPI_error(int val){
-    char* message;
-
-    sprintf(message, "PAPI error %d: %s\n", val, PAPI_strerror(val));
-    EmitLog(MyRank, SCHEDULER_THREAD, message, -1, PRINT_ALWAYS);
-    //exit(1);
-}
-
+/* Helper function to intialize PAPI data structures */
 inline void PAPIRes_init(long long *results, long long *times){
     int i;
 
@@ -154,10 +146,10 @@ void performance_init () {
         
         /* Initialize PAPI and PAPI threads */
         retval = PAPI_library_init(PAPI_VER_CURRENT);
-        if(retval != PAPI_VER_CURRENT) handle_PAPI_error(retval);
+        if(retval != PAPI_VER_CURRENT) PAPI_EmitLog(retval, MyRank, SCHEDULER_THREAD, PRINT_ALWAYS);
 
         retval = PAPI_thread_init(pthread_self);
-        if(retval != PAPI_OK) handle_PAPI_error(retval);
+        if(retval != PAPI_OK) PAPI_EmitLog(retval, MyRank, SCHEDULER_THREAD, PRINT_ALWAYS);
 
         /*
         retval = PAPI_create_eventset(&PAPI_EventSet);
