@@ -27,6 +27,14 @@
 #define POLY 0x0000000000000007ULL
 #define PERIOD 1317624576693539401LL
 
+
+
+#define NUM_PAPI_EVENTS 2 
+#define PAPI_COUNTERS { PAPI_FP_OPS, PAPI_TOT_CYC } 
+#define PAPI_UNITS { "FLOPS", "CYCS" } 
+
+
+
 // binary logarithm -- slow but only called once per GUPS plan.
 /**
  * \brief Binary logarithm (n=2^i)
@@ -85,11 +93,11 @@ void * makeGUPSPlan(data *m) {
  * \sa killGUPSPlan
 */
 int  initGUPSPlan(void *plan) {
-	int i;
-        int retval;
 	int ret = make_error(ALLOC,generic_err);
 
+        int retval, i;
         int PAPI_Events [NUM_PAPI_EVENTS] = PAPI_COUNTERS;
+        char* PAPI_units [NUM_PAPI_EVENTS] = PAPI_UNITS;
 
 	Plan *p;
 	GUPSdata *d = NULL;
@@ -108,6 +116,7 @@ int  initGUPSPlan(void *plan) {
                 retval = PAPI_add_events(p->PAPI_EventSet, PAPI_Events, NUM_PAPI_EVENTS);
                 if(retval != PAPI_OK) PAPI_EmitLog(retval, MyRank, 9999, PRINT_SOME);
                 PAPIRes_init(p->PAPI_Results, p->PAPI_Times);
+                PAPI_set_units(p->name, PAPI_units, NUM_PAPI_EVENTS);
                 //creat initializer for results?
 	}
 	// If the GUPS heap is valid, initialize GUPS variables.
@@ -314,7 +323,7 @@ int perfGUPSPlan(void *plan) {
 		
                 /* Additionally, passing PAPI_Results to be collected */
 		perf_table_update(&p->timers, opcounts, p->name);
-		PAPI_table_update(p->name, p->PAPI_Results, p->PAPI_Times);
+		PAPI_table_update(p->name, p->PAPI_Results, p->PAPI_Times, NUM_PAPI_EVENTS);
 		
                 //TODO: add place to present PAPI data
 		double gups = ((double)opcounts[TIMER0]/perftimer_gettime(&p->timers, TIMER0))/(1e9);

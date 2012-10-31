@@ -94,23 +94,10 @@ int   initDGEMMPlan(void *plan) {
 	DGEMMdata *d = NULL;
 	p = (Plan *)plan;
 
-        int retval;
-        int PAPI_Events [NUM_PAPI_EVENTS] = PAPI_COUNTERS;
-
 	if (p) {
 		d = (DGEMMdata*)p->vptr;
 		p->exec_count = 0;
 		perftimer_init(&p->timers, NUM_TIMERS);
-
-                /* Initialize plan's PAPI data */
-                p->PAPI_EventSet = PAPI_NULL;
-                retval = PAPI_create_eventset(&p->PAPI_EventSet);
-                if(retval != PAPI_OK) PAPI_EmitLog(retval, MyRank, 9999, PRINT_SOME);
-                
-                retval = PAPI_add_events(p->PAPI_EventSet, PAPI_Events, NUM_PAPI_EVENTS);
-                if(retval != PAPI_OK) PAPI_EmitLog(retval, MyRank, 9999, PRINT_SOME);
-                PAPIRes_init(p->PAPI_Results, p->PAPI_Times);
-                //creat initializer for results?
 	}
 	if(d) {
 		M = d->M;
@@ -157,9 +144,6 @@ void * killDGEMMPlan(void *plan) {
 	if(d->B) free((void*)(d->B));
 	if(d->A) free((void*)(d->A));
 
-        //retval = PAPI_stop(p->PAPI_EventSet, NULL);  //don't know if this will work
-        //if(retval != PAPI_OK) PAPI_EmitLog(retval, MyRank, 9999, PRINT_SOME);
-
 	free((void*)(d));
 	free((void*)(p));
 	return (void*)NULL;
@@ -176,11 +160,6 @@ void * killDGEMMPlan(void *plan) {
  * \sa killDGEMMPlan
  */
 int execDGEMMPlan(void *plan) {
-        /* PAPI vars */
-        int retval, k;
-        long long start, end;
-        char message[512];
-
 	int M, K, N, lda, ldb, ldc;
 	double *A, *B, *C;
 	double alpha, beta;
@@ -198,25 +177,10 @@ int execDGEMMPlan(void *plan) {
 	C = d->C;
 	M = K = N = lda = ldb = ldc = d->M;
 
-        /* Start PAPI counters and time */
-        retval = PAPI_start(p->PAPI_EventSet);
-        if(retval != PAPI_OK) PAPI_EmitLog(retval, MyRank, 9999, PRINT_SOME);
-        start = PAPI_get_real_usec();
-
 	ORB_read(t1);
 	cblas_dgemm( CblasRowMajor, CblasNoTrans, CblasNoTrans, M, N, K, alpha, A, lda, B, ldb, beta, C, ldc); 
-        end = PAPI_get_real_usec(); //PAPI time
 
 	ORB_read(t2);
-
-        /* Collect PAPI counters and store time elapsed */
-        retval = PAPI_accum(p->PAPI_EventSet, p->PAPI_Results);
-        if(retval != PAPI_OK) PAPI_EmitLog(retval, MyRank, 9999, PRINT_SOME);
-        for(k=0; k<NUM_PAPI_EVENTS; k++){
-            p->PAPI_Times[k] += (end - start);
-            snprintf(message, 512, "PAPI TEST: val = %llu\t time = %llu\n", p->PAPI_Results[k], p->PAPI_Times[k]);
-            EmitLog(MyRank, 9999, message, -1, PRINT_ALWAYS);
-        }
 
 	perftimer_accumulate(&p->timers, TIMER0, ORB_cycles_a(t2, t1));
 	return ERR_CLEAN;
@@ -246,7 +210,6 @@ int perfDGEMMPlan (void *plan) {
 		opcounts[TIMER2] = 0;
 		
 		perf_table_update(&p->timers, opcounts, p->name);
-		PAPI_table_update(p->name, p->PAPI_Results, p->PAPI_Times);
 		
 		double flops  = ((double)opcounts[TIMER0]/perftimer_gettime(&p->timers, TIMER0))/1e6;
 		EmitLogfs(MyRank, 9999, "DGEMM plan performance:", flops, "MFLOPS", PRINT_SOME);

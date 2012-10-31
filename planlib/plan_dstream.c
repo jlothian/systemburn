@@ -22,6 +22,14 @@
 #include <systemburn.h>
 #include <planheaders.h>
                  
+        
+        
+#define NUM_PAPI_EVENTS 3 
+#define PAPI_COUNTERS { PAPI_FP_OPS, PAPI_TOT_CYC, PAPI_FP_INS } 
+#define PAPI_UNITS { "FLOPS", "CYCS", "FLIPS" } 
+
+
+
 /**
  * \brief Checks the results of execDStreamPlan for errors.
  * \param [in] vptr Holds the data used to calculate the values used for error checking.
@@ -108,8 +116,9 @@ int    initDStreamPlan(void *plan) {
 	DStreamdata *d = NULL;
 	p = (Plan *)plan;
 
-        int retval;
+        int retval, i;
         int PAPI_Events [NUM_PAPI_EVENTS] = PAPI_COUNTERS;
+        char* PAPI_units [NUM_PAPI_EVENTS] = PAPI_UNITS;
 
 	if (p) {
 		d = (DStreamdata*)p->vptr;
@@ -121,9 +130,17 @@ int    initDStreamPlan(void *plan) {
                 retval = PAPI_create_eventset(&p->PAPI_EventSet);
                 if(retval != PAPI_OK) PAPI_EmitLog(retval, MyRank, 9999, PRINT_SOME);
                 
-                retval = PAPI_add_events(p->PAPI_EventSet, PAPI_Events, NUM_PAPI_EVENTS);
-                if(retval != PAPI_OK) PAPI_EmitLog(retval, MyRank, 9999, PRINT_SOME);
+                //retval = PAPI_add_events(p->PAPI_EventSet, PAPI_Events, NUM_PAPI_EVENTS);
+                //if(retval != PAPI_OK) PAPI_EmitLog(retval, MyRank, 9999, PRINT_SOME);
+                
+                //TODO: use loop version as below
+                for(i=0; i<TOTAL_PAPI_EVENTS && i<NUM_PAPI_EVENTS; i++){
+                    retval = PAPI_add_event(p->PAPI_EventSet, PAPI_Events[i]);
+                    if(retval != PAPI_OK) PAPI_EmitLog(retval, MyRank, 9999, PRINT_SOME);
+                }
+
                 PAPIRes_init(p->PAPI_Results, p->PAPI_Times);
+                PAPI_set_units(p->name, PAPI_units, NUM_PAPI_EVENTS);
                 //creat initializer for results?
 	}
 	if(d) {
@@ -244,7 +261,7 @@ int execDStreamPlan(void *plan) {
         /* Collect PAPI counters and store time elapsed */
         retval = PAPI_accum(p->PAPI_EventSet, p->PAPI_Results);
         if(retval != PAPI_OK) PAPI_EmitLog(retval, MyRank, 9999, PRINT_SOME);
-        for(k=0; k<NUM_PAPI_EVENTS; k++){
+        for(k=0; k<NUM_PAPI_EVENTS && k<TOTAL_PAPI_EVENTS; k++){
             p->PAPI_Times[k] += (end - start);
             //snprintf(message, 512, "PAPI TEST: val = %llu\t time = %llu\n", p->PAPI_Results[k], p->PAPI_Times[k]);
             //EmitLog(MyRank, 9999, message, -1, PRINT_ALWAYS);
@@ -253,6 +270,7 @@ int execDStreamPlan(void *plan) {
 	perftimer_accumulate(&p->timers, TIMER0, ORB_cycles_a(t2, t1));
 	perftimer_accumulate(&p->timers, TIMER1, ORB_cycles_a(t2, t1));
 	
+        //TODO: put PAPI in here as well
 	if (CHECK_CALC) {
 		ORB_read(t1);
 		ret = StreamCheck(d);
@@ -286,7 +304,8 @@ int perfDStreamPlan (void *plan) {
 		opcounts[TIMER2] = (3 * d->M + 7) * p->exec_count;                          // FLOPs count for checking stage (needs work...)
 		
 		perf_table_update(&p->timers, opcounts, p->name);
-		PAPI_table_update(p->name, p->PAPI_Results, p->PAPI_Times);
+		PAPI_table_update(p->name, p->PAPI_Results, p->PAPI_Times, NUM_PAPI_EVENTS);
+
 	        //TODO: Insert some PAPI info here as well	
 		
 		double flops = ((double)opcounts[TIMER0]/perftimer_gettime(&p->timers, TIMER0))/1e6;
@@ -329,6 +348,8 @@ plan_info DSTREAM_info = {
 	initDStreamPlan,
 	killDStreamPlan,
 	perfDStreamPlan,
-	{ "FLOPS", "B/s", NULL }
+	{ "FLOPS", "B/s", NULL }/*,
+	{ "FLOPS", "CYC" },
+        NUM_PAPI_EVENTS*/
 };
 

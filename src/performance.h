@@ -78,19 +78,20 @@ extern pthread_rwlock_t perf_data_lock [];
 
 
 /* PAPI specific functions and variables */
-//enum{ NUM_PAPI_EVENTS = 2 };
-//int PAPI_Events [NUM_PAPI_EVENTS] = { PAPI_FP_INS, PAPI_TOT_CYC };
 
-#define NUM_PAPI_EVENTS 2
-#define PAPI_COUNTERS { PAPI_FP_OPS, PAPI_TOT_CYC } //PAPI_SR_INS }
+#define TOTAL_PAPI_EVENTS 4
+//#define PAPI_COUNTERS { PAPI_FP_OPS, PAPI_TOT_CYC } //PAPI_SR_INS }
 
 //typedef struct {
 //    long long event_count[NUM_PAPI_EVENTS];
 //} PAPI_Results;
 
 extern void PAPIRes_init(long long *result, long long *times);
-extern void PAPI_table_update(int plan_id, long long *results, long long *timers);
-extern long long PAPI_Data [][2*NUM_PAPI_EVENTS];
+extern void PAPI_table_update(int plan_id, long long *results, long long *timers, int PAPI_num);
+extern void PAPI_set_units(int plan_id, char** units, int PAPI_num);
+//extern long long PAPI_Data [][2*NUM_PAPI_EVENTS];
+extern long long PAPI_Data [][2*TOTAL_PAPI_EVENTS];
+extern char* PAPI_data_unit [][TOTAL_PAPI_EVENTS]; //look at bottom of plan for example of plan data struct
 /* END PAPI */
 
 

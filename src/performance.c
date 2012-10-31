@@ -27,7 +27,7 @@
 inline void PAPIRes_init(long long *results, long long *times){
     int i;
 
-    for(i=0; i<NUM_PAPI_EVENTS; i++){
+    for(i=0; i<TOTAL_PAPI_EVENTS; i++){
         results[i] = 0LL;
         times[i] = 0LL;
     }   
@@ -125,7 +125,8 @@ pthread_rwlock_t perf_data_lock [NUM_PLANS];
 
 
 /* PAPI data structure */
-long long PAPI_Data [NUM_PLANS][2*NUM_PAPI_EVENTS]; 
+long long PAPI_Data [NUM_PLANS][2*TOTAL_PAPI_EVENTS];
+char *    PAPI_data_unit [NUM_PLANS][TOTAL_PAPI_EVENTS];
 
 
 
@@ -180,9 +181,15 @@ void perf_table_init () {
 			perf_data_unit[i][j] = plan_list[i]->perf_units[j];
 		}
                 /* Initialize PAPI data structure */
-                for(j = 0; j < NUM_PAPI_EVENTS; j++){
+                for(j = 0; j < TOTAL_PAPI_EVENTS; j++){
                     PAPI_Data[i][2*j] = 0LL;
                     PAPI_Data[i][2*j+1] = 0LL;
+                    /*
+                    if(j < plan_list[i]->PAPI_num)
+                        PAPI_data_unit[i][j] = plan_list[i]->PAPI_units[j];
+                    else
+                        PAPI_data_unit[i][j] = NULL;
+                    */
                 }
 		pthread_rwlock_init(&perf_data_lock[i],0);
 	}
@@ -201,6 +208,7 @@ void perf_table_print (int scope_flag, int print_priority) {
 		char line[150], temp[128], prefixes[] = " kMGTPE";
 		double timer, opcount, max, min;
 
+                long long PAPI_event, PAPI_time;
                 double event_per_sec;
 		
 		// Print the appropriate header to the table.
@@ -268,11 +276,30 @@ void perf_table_print (int scope_flag, int print_priority) {
 			}
 
                         /* Simple PAPI results print - add to main print loop */
-                        for(j=0; j<NUM_PAPI_EVENTS; j++){
-                            if(PAPI_Data[i][2*j] > 0LL && PAPI_Data[i][2*j+1] > 0LL){
-                                event_per_sec = PAPI_Data[i][2*j]/(double)PAPI_Data[i][2*j+1]*(1e-3);
-                                printf("PAPI val #%d: %f\n", j, event_per_sec);
+                        //line[0] = '\0';
+                        for(j=0; j<TOTAL_PAPI_EVENTS; j++){
+                            PAPI_event = PAPI_Data[i][2*j];
+                            PAPI_time  = PAPI_Data[i][2*j+1];
+
+                            if(PAPI_time > 0LL){
+                                k = 0;
+                                event_per_sec = (double)PAPI_time*(1.0e-6);
+                                if(PAPI_event > 0LL){
+                                    event_per_sec = PAPI_event/event_per_sec;
+                                    while(event_per_sec >= 1.0e3 && k < strlen(prefixes)){
+                                        event_per_sec /= 1.0e3;
+                                        k++;
+                                    }
+
+                                }
+				snprintf(line, 127, "%-6.2f %c%-8s", event_per_sec, prefixes[k], PAPI_data_unit[i][j]);
+                                printf("PAPI:\t %-8s %s\n", plan_list[i]->name, line);
                             }
+                            /*
+                            if(PAPI_Data[i][2*j] > 0LL && PAPI_Data[i][2*j+1] > 0LL){
+                                event_per_sec = PAPI_Data[i][2*j]/(double)PAPI_Data[i][2*j+1]*(1e-3); //do this calc in plan?
+                                printf("PAPI %s: %f\n", PAPI_data_unit[i][j], event_per_sec);
+                            }*/
                         }
 
 		}
@@ -422,14 +449,28 @@ void perf_table_update (PerfTimers *timers, uint64_t *opcounts, int plan_id) {
         pthread_rwlock_unlock(&perf_data_lock[plan_id]);
 }
 
-void PAPI_table_update(int plan_id, long long *results, long long *timers){
+void PAPI_table_update(int plan_id, long long *results, long long *timers, int PAPI_num){
         int i;
 
 	pthread_rwlock_wrlock(&perf_data_lock[plan_id]);
         /* Update PAPI data structure */
-        for(i=0; i<NUM_PAPI_EVENTS; i++){
+        for(i=0; i<TOTAL_PAPI_EVENTS && i<PAPI_num; i++){
             PAPI_Data[plan_id][2*i] += results[i];
             PAPI_Data[plan_id][2*i+1] += timers[i];
         }
         pthread_rwlock_unlock(&perf_data_lock[plan_id]);
+}
+
+void PAPI_set_units(int plan_id, char** units, int PAPI_num){
+    int i;
+    char* temp;
+
+    for(i=0; i<TOTAL_PAPI_EVENTS; i++){
+        if(i<PAPI_num)
+            temp = units[i];
+        else
+            temp = NULL;
+        PAPI_data_unit[plan_id][i] = temp;;
+        //PAPI_data_unit[plan_id][i] = i<PAPI_num ? units[i] : NULL;
+    }
 }

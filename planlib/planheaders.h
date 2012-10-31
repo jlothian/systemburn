@@ -76,8 +76,8 @@ typedef struct {                         /* Plan struct allocated/initialized by
 	uint64_t exec_count;             /**< Stores the number of times the exec function is called.  */
 
         int PAPI_EventSet;                        /* Holds the PAPI event set for this plan (?)        */
-        long long PAPI_Results [NUM_PAPI_EVENTS]; /* Holds the values collected from the PAPI counters */
-        long long PAPI_Times [NUM_PAPI_EVENTS];   /* Holds the values collected from the PAPI counters */
+        long long PAPI_Results [TOTAL_PAPI_EVENTS]; /* Holds the values collected from the PAPI counters */
+        long long PAPI_Times [TOTAL_PAPI_EVENTS];   /* Holds the values collected from the PAPI counters */
 } Plan;
 
 /**

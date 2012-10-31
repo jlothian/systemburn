@@ -54,6 +54,11 @@ typedef struct {
 	void* (*kill)(void* p);
 	int   (*perf)(void* p);
 	char* perf_units[];
+
+        /* PAPI data 
+	char* PAPI_units[];
+        int PAPI_num;
+        */
 } plan_info;
 
 /** \brief Struct that holds the information for a given SubLoad. */
