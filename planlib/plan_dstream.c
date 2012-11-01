@@ -141,6 +141,9 @@ int    initDStreamPlan(void *plan) {
 
                 PAPIRes_init(p->PAPI_Results, p->PAPI_Times);
                 PAPI_set_units(p->name, PAPI_units, NUM_PAPI_EVENTS);
+        
+                retval = PAPI_start(p->PAPI_EventSet);
+                if(retval != PAPI_OK) PAPI_EmitLog(retval, MyRank, 9999, PRINT_SOME);
                 //creat initializer for results?
 	}
 	if(d) {
@@ -173,7 +176,9 @@ int    initDStreamPlan(void *plan) {
  * \sa perfDStreamPlan
  */
 void * killDStreamPlan(void *plan) {
-	Plan *p;
+	int retval;
+        
+        Plan *p;
 	DStreamdata *d;
 	p = (Plan *)plan;
 	assert(p);
@@ -188,8 +193,8 @@ void * killDStreamPlan(void *plan) {
 	if(d->four)  free(d->four);
 	if(d->five)  free(d->five);
 
-        //retval = PAPI_stop(p->PAPI_EventSet, NULL);  //don't know if this will work
-        //if(retval != PAPI_OK) PAPI_EmitLog(retval, MyRank, 9999, PRINT_SOME);
+        retval = PAPI_stop(p->PAPI_EventSet, NULL);  //don't know if this will work
+        if(retval != PAPI_OK) PAPI_EmitLog(retval, MyRank, 9999, PRINT_SOME);
 
 	free(d);
 	free(p);
@@ -234,7 +239,7 @@ int execDStreamPlan(void *plan) {
         }
         
         /* Start PAPI counters and time */
-        retval = PAPI_start(p->PAPI_EventSet);
+        retval = PAPI_reset(p->PAPI_EventSet);
         if(retval != PAPI_OK) PAPI_EmitLog(retval, MyRank, 9999, PRINT_SOME);
         start = PAPI_get_real_usec();
 
