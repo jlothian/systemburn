@@ -89,7 +89,7 @@ int execYOUR_NAMEPlan(void *plan) { // <- Replace YOUR_NAME with the name of you
 	ORB_t t1, t2;     // Storage for timestamps, used to accurately find the runtime of the plan execution.
 	Plan *p;
 	p = (Plan *)plan;
-	p->exec_count++   // Update the execution counter stored in the plan.
+	p->exec_count++;   // Update the execution counter stored in the plan.
 	
 	ORB_read(t1);     // Store the timestamp for the beginning of the execution.
 	
