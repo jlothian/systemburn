@@ -160,7 +160,7 @@ int perfYOUR_NAMEPlan(void *plan) {
 	if (p->exec_count > 0) {  // Ensures the plan has been executed at least once...
 		// Assign appropriate plan-specific operation counts to the opcount[] array, such that the 
 		// indices correspond with the timers used in the exec function.
-		opcount[TIMER0] = p->exec_count * YOUR_OPERATIONS_PER_EXECUTION; // Where operations can be a function of the input size.
+		opcounts[TIMER0] = p->exec_count * YOUR_OPERATIONS_PER_EXECUTION; // Where operations can be a function of the input size.
 		
 		perf_table_update(&p->timers, opcounts, p->name);  // Updates the global table with the performance data.
 		
