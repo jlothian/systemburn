@@ -45,7 +45,7 @@ void * makeYOUR_NAMEPlan(data *i) { // <- Replace YOUR_NAME with the name of you
 		p->name          = YOUR_NAME;          // <- Replace YOUR_NAME with the name of your module.
 		ip=(YOUR_TYPE*)malloc(sizeof(YOUR_TYPE)); // <- Change YOUR_TYPE to your defined data type.
 		assert(ip);
-		if(ip) ip.YOUR_MEMBER = *i; // <- Unless is it just an int, change this so that whatever field of your type uses an int get defined here.
+		if(ip) ip->YOUR_MEMBER = *i; // <- Unless is it just an int, change this so that whatever field of your type uses an int get defined here.
 		(p->vptr)=(void*)ip; // <- Setting the void pointer member of the Plan struct to your data structure. Only change if you change the name of ip earlier in this function.
 	}
 	return p; // <- Returning the Plan pointer. Do not change.
