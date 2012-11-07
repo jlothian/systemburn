@@ -31,6 +31,9 @@
 /* Define if you have the MPI library. */
 #undef HAVE_MPI
 
+/* Define if you want to use PAPI counters */
+#undef HAVE_PAPI
+
 /* Define if you have POSIX threads libraries and header files. */
 #undef HAVE_PTHREAD
 
@@ -112,9 +115,6 @@
 
 /* Define to 1 for the system to use x86_64 timers. */
 #undef TIMER_X86_64
-
-/* Define if you want to use /proc temperature sensors instead of /sys. */
-#undef USE_PROC_TEMP
 
 /* Define to `unsigned int' if <sys/types.h> does not define. */
 #undef size_t

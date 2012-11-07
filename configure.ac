@@ -26,6 +26,7 @@ m4_include(m4/shmem.m4)
 #m4_include(m4/cuda_alt.m4)
 m4_include(m4/cuda_new.m4)
 m4_include(m4/orbt.m4)
+m4_include(m4/papi.m4)
 
 dnl
 dnl Check for C compiler 
@@ -144,35 +145,17 @@ dnl
 dnl Checking for CUDA
 dnl
 ENABLE_CUDA=0
-#AC_ARG_WITH([cuda],
-#	[AS_HELP_STRING([--without-cuda],
-#	[disable CUDA routines.])],
-#	[],
-#	with_cuda=yes])
-#AS_IF([test "x$with_cuda" != xyes], [
-	ACX_CUDA([ENABLE_CUDA=1
-		AC_DEFINE(HAVE_CUBLAS,1,[Define if you have a CUDA library.]) ],
-		AC_MSG_WARN(CUDA library not found. Disabling modules that require it.))
-AS_IF([test "$ENABLE_CUDA" != 0], [
-	CUDA_INC="-I/usr/local/cuda/include"
-])
-	#CUDA_INC=`echo $CUDA_LIBS | sed 's/-L.*//g'`
-	AC_SUBST(ENABLE_CUDA)
-#])
+ACX_CUDA([ENABLE_CUDA=1
+	AC_DEFINE(HAVE_CUBLAS,1,[Define if you have a CUDA library.]) ],
+	AC_MSG_WARN(CUDA library not found. Disabling modules that require it.))
+AS_IF([test "$ENABLE_CUDA" != 0], [ CUDA_INC="-I/usr/local/cuda/include" ])
+AC_SUBST(ENABLE_CUDA)
 
-#ENABLE_CUDA=1
-#AX_CHECK_CUDA([ENABLE_CUDA=1
-#CT_CHECK_CUDA_API([ENABLE_CUDA=1
-#	AC_DEFINE(HAVE_CUBLAS,1,[Define for CUDA capability.]) ],
-#	AC_MSG_WARN(CUDA library not found.))
-#AC_DEFINE([HAVE_CUBLAS],1,[CUDA])
-#AC_SUBST(ENABLE_CUDA)
-#CT_CHECK_CUDA_SDK
-#CDINCPATH = "$CDINCPATH $CUDA_CFLAGS"
-#CDLIBPATH = "$CDLIBPATH $CUDA_LDFLAGS"
-
-
-#CUDA_LIBS="/usr/local/cuda/include"
+ENABLE_PAPI=0
+ACX_PAPI([ENABLE_PAPI=1
+         AC_DEFINE(HAVE_PAPI,1,[Define if you want to use PAPI counters])], 
+         AC_MSG_WARN([no PAPI library available.]))
+AC_SUBST(ENABLE_PAPI)
 
 dnl
 dnl Link to the math library
@@ -221,6 +204,7 @@ dnl Configure ORBTimers
 dnl
 ACX_ORBT([], [AC_MSG_ERROR([no valid timer types available.], [$?])])
 
+
 dnl
 dnl Worker threads should be asynchronous
 dnl
@@ -241,9 +225,9 @@ dnl Sets the compilation options
 dnl
 CONFIG_CC="$CC"
 CONFIG_MPICC="$MPICC"
-CONFIG_CFLAGS="$CFLAGS $PTHREAD_CFLAGS $OPENMP_CFLAGS $FFTW3_INC $BLAS_INC $CUDA_INC"
+CONFIG_CFLAGS="$CFLAGS $PTHREAD_CFLAGS $OPENMP_CFLAGS $FFTW3_INC $BLAS_INC $CUDA_INC $PAPI_INC"
 CONFIG_LDFLAGS="$LDFLAGS"
-CONFIG_LIBS="$MPI_LIBS $PTHREAD_LIBS $LDFLAGS $LIBS $BLAS_LIBS $FFTW3_LIBS $MATH_LIBS $SHMEM_LIBS $CUDA_LIBS"
+CONFIG_LIBS="$MPI_LIBS $PTHREAD_LIBS $LDFLAGS $LIBS $BLAS_LIBS $FFTW3_LIBS $MATH_LIBS $SHMEM_LIBS $CUDA_LIBS $PAPI_LIBS"
 AC_SUBST(CONFIG_CC)
 AC_SUBST(CONFIG_MPICC)
 AC_SUBST(CONFIG_CFLAGS)
