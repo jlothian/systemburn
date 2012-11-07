@@ -75,9 +75,11 @@ typedef struct {                         /* Plan struct allocated/initialized by
 	PerfTimers timers;               /**< Contains pairs of time stamps for measuring performance. */
 	uint64_t exec_count;             /**< Stores the number of times the exec function is called.  */
 
+#ifdef HAVE_PAPI
         int PAPI_EventSet;                        /* Holds the PAPI event set for this plan (?)        */
         long long PAPI_Results [TOTAL_PAPI_EVENTS]; /* Holds the values collected from the PAPI counters */
         long long PAPI_Times [TOTAL_PAPI_EVENTS];   /* Holds the values collected from the PAPI counters */
+#endif //HAVE_PAPI
 } Plan;
 
 /**

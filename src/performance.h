@@ -29,9 +29,10 @@
 #include <config.h>
 #include <orbtimer.h>
 
+#ifdef HAVE_PAPI
 /* PAPI header */
 #include <papi.h>  
-
+#endif
 
 /**
  * \brief Indices for use with the performance timers.
@@ -77,8 +78,8 @@ extern pthread_rwlock_t perf_data_lock [];
 
 
 
+#ifdef HAVE_PAPI
 /* PAPI specific functions and variables */
-
 #define TOTAL_PAPI_EVENTS 4
 //#define PAPI_COUNTERS { PAPI_FP_OPS, PAPI_TOT_CYC } //PAPI_SR_INS }
 
@@ -92,6 +93,7 @@ extern void PAPI_set_units(int plan_id, char** units, int PAPI_num);
 //extern long long PAPI_Data [][2*NUM_PAPI_EVENTS];
 extern long long PAPI_Data [][2*TOTAL_PAPI_EVENTS];
 extern char* PAPI_data_unit [][TOTAL_PAPI_EVENTS]; //look at bottom of plan for example of plan data struct
+#endif
 /* END PAPI */
 
 

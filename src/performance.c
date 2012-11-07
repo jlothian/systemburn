@@ -23,6 +23,7 @@
 #include <performance.h>
 #include <comm.h>
 
+#ifdef HAVE_PAPI
 /* Helper function to intialize PAPI data structures */
 inline void PAPIRes_init(long long *results, long long *times){
     int i;
@@ -32,6 +33,7 @@ inline void PAPIRes_init(long long *results, long long *times){
         times[i] = 0LL;
     }   
 }
+#endif //HAVE_PAPI
 
 /*
  * Functions for performance measurement and calculation.
@@ -124,10 +126,11 @@ char *           perf_data_unit [NUM_PLANS][NUM_TIMERS];
 pthread_rwlock_t perf_data_lock [NUM_PLANS];
 
 
+#ifdef HAVE_PAPI
 /* PAPI data structure */
 long long PAPI_Data [NUM_PLANS][2*TOTAL_PAPI_EVENTS];
 char *    PAPI_data_unit [NUM_PLANS][TOTAL_PAPI_EVENTS];
-
+#endif //HAVE_PAPI
 
 
 /*
@@ -145,12 +148,14 @@ void performance_init () {
 	if (MyRank == ROOT) EmitLog(MyRank, SCHEDULER_THREAD, "Calibrating performance timers.", -1, PRINT_ALWAYS);
 	ORB_calibrate();
         
+#ifdef HAVE_PAPI
         /* Initialize PAPI and PAPI threads */
         retval = PAPI_library_init(PAPI_VER_CURRENT);
         if(retval != PAPI_VER_CURRENT) PAPI_EmitLog(retval, MyRank, SCHEDULER_THREAD, PRINT_ALWAYS);
 
         retval = PAPI_thread_init(pthread_self);
         if(retval != PAPI_OK) PAPI_EmitLog(retval, MyRank, SCHEDULER_THREAD, PRINT_ALWAYS);
+#endif //HAVE_PAPI
 
         /*
         retval = PAPI_create_eventset(&PAPI_EventSet);
@@ -180,6 +185,7 @@ void perf_table_init () {
 		for (j = 0; j < NUM_TIMERS; j++) {
 			perf_data_unit[i][j] = plan_list[i]->perf_units[j];
 		}
+#ifdef HAVE_PAPI
                 /* Initialize PAPI data structure */
                 for(j = 0; j < TOTAL_PAPI_EVENTS; j++){
                     PAPI_Data[i][2*j] = 0LL;
@@ -191,6 +197,7 @@ void perf_table_init () {
                         PAPI_data_unit[i][j] = NULL;
                     */
                 }
+#endif //HAVE_PAPI
 		pthread_rwlock_init(&perf_data_lock[i],0);
 	}
 }
@@ -208,7 +215,9 @@ void perf_table_print (int scope_flag, int print_priority) {
 		char line[150], temp[128], prefixes[] = " kMGTPE";
 		double timer, opcount, max, min;
 
+#ifdef HAVE_PAPI
                 long long PAPI_event, PAPI_time;
+#endif //HAVE_PAPI
                 double event_per_sec;
 		
 		// Print the appropriate header to the table.
@@ -275,6 +284,7 @@ void perf_table_print (int scope_flag, int print_priority) {
 				printf("PERF:\t %-8s %s\n", plan_list[i]->name, line);
 			}
 
+#ifdef HAVE_PAPI
                         /* Simple PAPI results print - add to main print loop */
                         //line[0] = '\0';
                         for(j=0; j<TOTAL_PAPI_EVENTS; j++){
@@ -301,7 +311,7 @@ void perf_table_print (int scope_flag, int print_priority) {
                                 printf("PAPI %s: %f\n", PAPI_data_unit[i][j], event_per_sec);
                             }*/
                         }
-
+#endif //HAVE_PAPI
 		}
 		printf("\n");
 	}
@@ -449,6 +459,7 @@ void perf_table_update (PerfTimers *timers, uint64_t *opcounts, int plan_id) {
         pthread_rwlock_unlock(&perf_data_lock[plan_id]);
 }
 
+#ifdef HAVE_PAPI
 void PAPI_table_update(int plan_id, long long *results, long long *timers, int PAPI_num){
         int i;
 
@@ -474,3 +485,4 @@ void PAPI_set_units(int plan_id, char** units, int PAPI_num){
         //PAPI_data_unit[plan_id][i] = i<PAPI_num ? units[i] : NULL;
     }
 }
+#endif //HAVE_PAPI

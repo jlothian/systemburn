@@ -262,7 +262,9 @@ int main(int argc, char** argv, char **envp) {
         EmitLog(MyRank, SCHEDULER_THREAD, "Run Completed. Exiting.", -1, PRINT_ALWAYS);
     }
     
+#ifdef HAVE_PAPI
     PAPI_shutdown();
+#endif //HAVE_PAPI
 
     comm_finalize();
     exit(0);
