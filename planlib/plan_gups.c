@@ -29,10 +29,11 @@
 
 
 
+#ifdef HAVE_PAPI
 #define NUM_PAPI_EVENTS 2 
 #define PAPI_COUNTERS { PAPI_FP_OPS, PAPI_TOT_CYC } 
 #define PAPI_UNITS { "FLOPS", "CYCS" } 
-
+#endif //HAVE_PAPI
 
 
 // binary logarithm -- slow but only called once per GUPS plan.
@@ -96,8 +97,10 @@ int  initGUPSPlan(void *plan) {
 	int ret = make_error(ALLOC,generic_err);
 
         int retval, i;
+#ifdef HAVE_PAPI
         int PAPI_Events [NUM_PAPI_EVENTS] = PAPI_COUNTERS;
         char* PAPI_units [NUM_PAPI_EVENTS] = PAPI_UNITS;
+#endif //HAVE_PAPI
 
 	Plan *p;
 	GUPSdata *d = NULL;
@@ -108,6 +111,7 @@ int  initGUPSPlan(void *plan) {
 		p->exec_count = 0;
 		perftimer_init(&p->timers, NUM_TIMERS);
 
+#ifdef HAVE_PAPI
                 /* Initialize plan's PAPI data */
                 p->PAPI_EventSet = PAPI_NULL;
                 retval = PAPI_create_eventset(&p->PAPI_EventSet);
@@ -117,6 +121,7 @@ int  initGUPSPlan(void *plan) {
                 if(retval != PAPI_OK) PAPI_EmitLog(retval, MyRank, 9999, PRINT_SOME);
                 PAPIRes_init(p->PAPI_Results, p->PAPI_Times);
                 PAPI_set_units(p->name, PAPI_units, NUM_PAPI_EVENTS);
+#endif //HAVE_PAPI
                 //creat initializer for results?
 	}
 	// If the GUPS heap is valid, initialize GUPS variables.
@@ -221,10 +226,12 @@ int execGUPSPlan(void *plan) {
 		ran[i] = GUPS_startRNG((nupdates/RSIZE)*i);
 
 
+#ifdef HAVE_PAPI
         /* Start PAPI counters and time */
         retval = PAPI_start(p->PAPI_EventSet);
         if(retval != PAPI_OK) PAPI_EmitLog(retval, MyRank, 9999, PRINT_SOME);
         start = PAPI_get_real_usec();
+#endif //HAVE_PAPI
 
 	ORB_read(t1);
 	/* perform updates to main table */
@@ -234,10 +241,11 @@ int execGUPSPlan(void *plan) {
 			tbl[ran[j] & (tblsize-1)] ^= sub[ran[j] >> (64-lsubsize)];
 		}
 	}
-        end = PAPI_get_real_usec(); //PAPI time
 
 	ORB_read(t2);
 	perftimer_accumulate(&p->timers, TIMER0, ORB_cycles_a(t2, t1));
+#ifdef HAVE_PAPI
+        end = PAPI_get_real_usec(); //PAPI time
 
         /* Collect PAPI counters and store time elapsed */
         retval = PAPI_accum(p->PAPI_EventSet, p->PAPI_Results);
@@ -245,16 +253,19 @@ int execGUPSPlan(void *plan) {
         for(k=0; k<NUM_PAPI_EVENTS; k++){
             p->PAPI_Times[k] += (end - start);
         }
+#endif //HAVE_PAPI
 
 
 	/* verify results */
 	if (CHECK_CALC) {
 		uint64_t temp = 0x1;
                 
+#ifdef HAVE_PAPI
                 /* Restart PAPI counters */
                 retval = PAPI_reset(p->PAPI_EventSet);
                 if(retval != PAPI_OK) PAPI_EmitLog(retval, MyRank, 9999, PRINT_SOME);
                 start = PAPI_get_real_usec();
+#endif //HAVE_PAPI
 
 		ORB_read(t1);
 		for (i = 0; i < nupdates; i++) {
@@ -274,25 +285,27 @@ int execGUPSPlan(void *plan) {
 			errflag=1;
 			}
 		}
-                end = PAPI_get_real_usec(); //PAPI time
 		
                 ORB_read(t2);
 		perftimer_accumulate(&p->timers, TIMER1, ORB_cycles_a(t2, t1));
 
+#ifdef HAVE_PAPI
+                end = PAPI_get_real_usec(); //PAPI time
                 /* Collect PAPI counters */
                 retval = PAPI_accum(p->PAPI_EventSet, p->PAPI_Results);
                 if(retval != PAPI_OK) PAPI_EmitLog(retval, MyRank, 9999, PRINT_SOME);
                 for(k=0; k<NUM_PAPI_EVENTS; k++){
                     p->PAPI_Times[k] += (end - start);
                 }
-
+#endif //HAVE_PAPI
 		if(errflag==1)
 			ret = make_error(CALC,generic_err);
 	}
-
+#ifdef HAVE_PAPI
         /* Stop PAPI counters */
         retval = PAPI_stop(p->PAPI_EventSet, NULL);
         if(retval != PAPI_OK) PAPI_EmitLog(retval, MyRank, 9999, PRINT_SOME);
+#endif //HAVE_PAPI
 
 	return ret;
 }
@@ -323,7 +336,9 @@ int perfGUPSPlan(void *plan) {
 		
                 /* Additionally, passing PAPI_Results to be collected */
 		perf_table_update(&p->timers, opcounts, p->name);
+#ifdef HAVE_PAPI
 		PAPI_table_update(p->name, p->PAPI_Results, p->PAPI_Times, NUM_PAPI_EVENTS);
+#endif //HAVE_PAPI
 		
                 //TODO: add place to present PAPI data
 		double gups = ((double)opcounts[TIMER0]/perftimer_gettime(&p->timers, TIMER0))/(1e9);
