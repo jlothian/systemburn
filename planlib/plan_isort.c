@@ -190,12 +190,18 @@ int execISORTPlan(void *plan) { // <- Replace ISORT with the name of your module
  * \brief Frees the memory used in the plan
  * \param plan Holds the information and memory location for the plan.
  */
-void * killISORTPlan(void *plan) { // <- Replace ISORT with the name of your module.
-	Plan *p; // <- Plan type. Do not change.
-	p = (Plan *)plan; // <- Setting the Plan pointer. Do not change.
-	free((void*)(p->vptr)); // <- Freeing the used void pointer member of Plan. Do not change.
-	free((void*)(plan)); // <- Freeing the used Plan pointer. Do not change.
-	return (void*)NULL; // <- Return statement to ensure nice exit from module.
+void * killISORTPlan(void *plan) {
+	Plan *p; 
+        ISORTdata *d;
+	p = (Plan *)plan;
+        d = (ISORTdata *)(p->vptr);
+        if(d->array){
+                free(d->array);
+        }
+	free((void*)(p->vptr));
+	free((void*)(plan));
+        
+	return (void*)NULL;
 }
 
 /************************
