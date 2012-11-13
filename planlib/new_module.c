@@ -45,7 +45,7 @@ void * makeYOUR_NAMEPlan(data *i) { // <- Replace YOUR_NAME with the name of you
 		p->name          = YOUR_NAME;          // <- Replace YOUR_NAME with the name of your module.
 		ip=(YOUR_TYPE*)malloc(sizeof(YOUR_TYPE)); // <- Change YOUR_TYPE to your defined data type.
 		assert(ip);
-		if(ip) ip.YOUR_MEMBER = *i; // <- Unless is it just an int, change this so that whatever field of your type uses an int get defined here.
+		if(ip) ip->YOUR_MEMBER = *i; // <- Unless is it just an int, change this so that whatever field of your type uses an int get defined here.
 		(p->vptr)=(void*)ip; // <- Setting the void pointer member of the Plan struct to your data structure. Only change if you change the name of ip earlier in this function.
 	}
 	return p; // <- Returning the Plan pointer. Do not change.
@@ -89,7 +89,7 @@ int execYOUR_NAMEPlan(void *plan) { // <- Replace YOUR_NAME with the name of you
 	ORB_t t1, t2;     // Storage for timestamps, used to accurately find the runtime of the plan execution.
 	Plan *p;
 	p = (Plan *)plan;
-	p->exec_count++   // Update the execution counter stored in the plan.
+	p->exec_count++;   // Update the execution counter stored in the plan.
 	
 	ORB_read(t1);     // Store the timestamp for the beginning of the execution.
 	
@@ -160,7 +160,7 @@ int perfYOUR_NAMEPlan(void *plan) {
 	if (p->exec_count > 0) {  // Ensures the plan has been executed at least once...
 		// Assign appropriate plan-specific operation counts to the opcount[] array, such that the 
 		// indices correspond with the timers used in the exec function.
-		opcount[TIMER0] = p->exec_count * YOUR_OPERATIONS_PER_EXECUTION; // Where operations can be a function of the input size.
+		opcounts[TIMER0] = p->exec_count * YOUR_OPERATIONS_PER_EXECUTION; // Where operations can be a function of the input size.
 		
 		perf_table_update(&p->timers, opcounts, p->name);  // Updates the global table with the performance data.
 		
