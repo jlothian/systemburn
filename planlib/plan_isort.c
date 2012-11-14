@@ -195,8 +195,8 @@ void * killISORTPlan(void *plan) {
         ISORTdata *d;
 	p = (Plan *)plan;
         d = (ISORTdata *)(p->vptr);
-        if(d->array){
-                free(d->array);
+        if(d->numbers){
+                free(d->numbers);
         }
 	free((void*)(p->vptr));
 	free((void*)(plan));
