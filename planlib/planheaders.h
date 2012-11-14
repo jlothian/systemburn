@@ -39,6 +39,7 @@
 #include <plan_write.h>
 #include <plan_cba.h>
 #include <plan_tilt.h>
+#include <plan_isort.h>
 
 #ifdef HAVE_BLAS
 #include <plan_dgemm.h>
@@ -130,6 +131,7 @@ typedef enum {
 	WRITE,
 	CBA,
 	TILT,
+	ISORT,
 	UNKN_PLAN /* Tells when the plan name is unrecognized.*/
 } plan_choice;
 
@@ -171,6 +173,7 @@ plan_info* plan_list[] = {
 	&(WRITE_info),
 	&(CBA_info),
 	&(TILT_info),
+	&(ISORT_info),
 	&(SLEEP_info) // Default for unknown plans.
 };
 #endif // USED
