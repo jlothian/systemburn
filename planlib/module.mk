@@ -37,6 +37,7 @@ endif
 ifeq ($(ENABLE_CUDA),1)
 PLAN_SRC := $(PLAN_SRC) \
 	$(DIR)/plan_dcublas.c \
+	$(DIR)/plan_cudamem.c \
 	$(DIR)/plan_scublas.c
 endif
 

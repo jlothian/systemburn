@@ -50,6 +50,7 @@
 #ifdef HAVE_CUBLAS
 #include <plan_dcublas.h>
 #include <plan_scublas.h>
+#include <plan_cudamem.h>
 #endif
 
 #define MSG_SIZE 100
@@ -111,6 +112,7 @@ typedef enum {
 #ifdef HAVE_CUBLAS
 	DCUBLAS,
 	SCUBLAS,
+        CUDAMEM,
 #endif
 	DSTREAM,
 	DSTRIDE,
@@ -153,6 +155,7 @@ plan_info* plan_list[] = {
 #ifdef HAVE_CUBLAS
 	&(DCUBLAS_info),
 	&(SCUBLAS_info),
+	&(CUDAMEM_info),
 #endif
 	&(DSTREAM_info),
 	&(DSTRIDE_info),
