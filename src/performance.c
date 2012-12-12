@@ -143,30 +143,16 @@ char *    PAPI_data_unit [NUM_PLANS][TOTAL_PAPI_EVENTS];
  * table for storing performance data.
  */
 void performance_init () {
-        int retval;
 
 	if (MyRank == ROOT) EmitLog(MyRank, SCHEDULER_THREAD, "Calibrating performance timers.", -1, PRINT_ALWAYS);
 	ORB_calibrate();
         
 #ifdef HAVE_PAPI
         /* Initialize PAPI and PAPI threads */
-        retval = PAPI_library_init(PAPI_VER_CURRENT);
-        if(retval != PAPI_VER_CURRENT) PAPI_EmitLog(retval, MyRank, SCHEDULER_THREAD, PRINT_ALWAYS);
+        TEST_PAPI(PAPI_library_init, PAPI_VER_CURRENT, MyRank, SCHEDULER_THREAD, PRINT_ALWAYS, PAPI_VER_CURRENT);
 
-        retval = PAPI_thread_init(pthread_self);
-        if(retval != PAPI_OK) PAPI_EmitLog(retval, MyRank, SCHEDULER_THREAD, PRINT_ALWAYS);
+        TEST_PAPI(PAPI_thread_init, PAPI_OK, MyRank, SCHEDULER_THREAD, PRINT_ALWAYS, pthread_self);
 #endif //HAVE_PAPI
-
-        /*
-        retval = PAPI_create_eventset(&PAPI_EventSet);
-        if(retval != PAPI_OK) handle_PAPI_error(retval);
-
-        retval = PAPI_add_events(PAPI_EventSet, PAPI_Events, NUM_PAPI_EVENTS);
-        if(retval != PAPI_OK) handle_PAPI_error(retval);
-
-        retval = PAPI_start(PAPI_EventSet);
-        if(retval != PAPI_OK) handle_PAPI_error(retval);
-        */
 
         /* Initialize performance tables */
         perf_table_init();
@@ -190,12 +176,6 @@ void perf_table_init () {
                 for(j = 0; j < TOTAL_PAPI_EVENTS; j++){
                     PAPI_Data[i][2*j] = 0LL;
                     PAPI_Data[i][2*j+1] = 0LL;
-                    /*
-                    if(j < plan_list[i]->PAPI_num)
-                        PAPI_data_unit[i][j] = plan_list[i]->PAPI_units[j];
-                    else
-                        PAPI_data_unit[i][j] = NULL;
-                    */
                 }
 #endif //HAVE_PAPI
 		pthread_rwlock_init(&perf_data_lock[i],0);
@@ -286,7 +266,6 @@ void perf_table_print (int scope_flag, int print_priority) {
 
 #ifdef HAVE_PAPI
                         /* Simple PAPI results print - add to main print loop */
-                        //line[0] = '\0';
                         for(j=0; j<TOTAL_PAPI_EVENTS; j++){
                             PAPI_event = PAPI_Data[i][2*j];
                             PAPI_time  = PAPI_Data[i][2*j+1];
@@ -305,11 +284,6 @@ void perf_table_print (int scope_flag, int print_priority) {
 				snprintf(line, 127, "%-6.2f %c%-8s", event_per_sec, prefixes[k], PAPI_data_unit[i][j]);
                                 printf("PAPI:\t %-8s %s\n", plan_list[i]->name, line);
                             }
-                            /*
-                            if(PAPI_Data[i][2*j] > 0LL && PAPI_Data[i][2*j+1] > 0LL){
-                                event_per_sec = PAPI_Data[i][2*j]/(double)PAPI_Data[i][2*j+1]*(1e-3); //do this calc in plan?
-                                printf("PAPI %s: %f\n", PAPI_data_unit[i][j], event_per_sec);
-                            }*/
                         }
 #endif //HAVE_PAPI
 		}

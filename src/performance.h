@@ -82,6 +82,16 @@ extern pthread_rwlock_t perf_data_lock [];
 /* PAPI specific functions and variables */
 #define TOTAL_PAPI_EVENTS 4
 
+//#define TEST_PAPI(func,test,id,...)                                       
+#define TEST_PAPI(func,test,rank,tnum,debug,...)    \
+{                                                   \
+    int retval;                                     \
+    retval = func(__VA_ARGS__);                     \
+    if(retval != test){                             \
+        PAPI_EmitLog(retval, rank, tnum, debug);    \
+    }                                               \
+}
+
 extern void PAPIRes_init(long long *result, long long *times);
 extern void PAPI_table_update(int plan_id, long long *results, long long *timers, int PAPI_num);
 extern void PAPI_set_units(int plan_id, char** units, int PAPI_num);

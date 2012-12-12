@@ -117,7 +117,7 @@ int    initDStreamPlan(void *plan) {
 	DStreamdata *d = NULL;
 	p = (Plan *)plan;
 
-        int retval, i;
+        int i;
 #ifdef HAVE_PAPI
         int PAPI_Events [NUM_PAPI_EVENTS] = PAPI_COUNTERS;
         char* PAPI_units [NUM_PAPI_EVENTS] = PAPI_UNITS;
@@ -132,27 +132,22 @@ int    initDStreamPlan(void *plan) {
 #ifdef HAVE_PAPI
                 p->PAPI_EventSet = PAPI_NULL;
                 p->PAPI_Num_Events = 0;
-                retval = PAPI_create_eventset(&p->PAPI_EventSet);
-                if(retval != PAPI_OK) PAPI_EmitLog(retval, MyRank, 9999, PRINT_SOME);
+
+                TEST_PAPI(PAPI_create_eventset, PAPI_OK, MyRank, 9999, PRINT_SOME, &p->PAPI_EventSet);
                 
                 //Add the desired events to the Event Set; ensure the dsired counters
                 //  are on the system then add, ignore otherwise
                 for(i=0; i<TOTAL_PAPI_EVENTS && i<NUM_PAPI_EVENTS; i++){
-                    //Check the counter
                     if(PAPI_query_event(PAPI_Events[i]) == PAPI_OK){
                         p->PAPI_Num_Events++;
-                        //add counter and error check
-                        retval = PAPI_add_event(p->PAPI_EventSet, PAPI_Events[i]);
-                        if(retval != PAPI_OK) PAPI_EmitLog(retval, MyRank, 9999, PRINT_SOME);
+                        TEST_PAPI(PAPI_add_event, PAPI_OK, MyRank, 9999, PRINT_SOME, p->PAPI_EventSet, PAPI_Events[i]);
                     }
                 }
 
                 PAPIRes_init(p->PAPI_Results, p->PAPI_Times);
                 PAPI_set_units(p->name, PAPI_units, NUM_PAPI_EVENTS);
         
-                retval = PAPI_start(p->PAPI_EventSet);
-                if(retval != PAPI_OK) PAPI_EmitLog(retval, MyRank, 9999, PRINT_SOME);
-                //creat initializer for results?
+                TEST_PAPI(PAPI_start, PAPI_OK, MyRank, 9999, PRINT_SOME, p->PAPI_EventSet);
 #endif //HAVE_PAPI
 	}
 	if(d) {
@@ -185,8 +180,6 @@ int    initDStreamPlan(void *plan) {
  * \sa perfDStreamPlan
  */
 void * killDStreamPlan(void *plan) {
-	int retval;
-        
         Plan *p;
 	DStreamdata *d;
 	p = (Plan *)plan;
@@ -203,8 +196,7 @@ void * killDStreamPlan(void *plan) {
 	if(d->five)  free(d->five);
 
 #ifdef HAVE_PAPI
-        retval = PAPI_stop(p->PAPI_EventSet, NULL);  //don't know if this will work
-        if(retval != PAPI_OK) PAPI_EmitLog(retval, MyRank, 9999, PRINT_SOME);
+        TEST_PAPI(PAPI_stop, PAPI_OK, MyRank, 9999, PRINT_SOME, p->PAPI_EventSet, NULL);
 #endif //HAVE_PAPI
 	free(d);
 	free(p);
@@ -223,9 +215,9 @@ void * killDStreamPlan(void *plan) {
  */
 int execDStreamPlan(void *plan) {
         /* PAPI vars */
-        int retval, k;
+        int k;
         long long start, end;
-        //char message[512];
+        /* PAPI vars */
 
 	register int i;
 	int ret = ERR_CLEAN;
@@ -250,8 +242,7 @@ int execDStreamPlan(void *plan) {
         
 #ifdef HAVE_PAPI
         /* Start PAPI counters and time */
-        retval = PAPI_reset(p->PAPI_EventSet);
-        if(retval != PAPI_OK) PAPI_EmitLog(retval, MyRank, 9999, PRINT_SOME);
+        TEST_PAPI(PAPI_reset, PAPI_OK, MyRank, 9999, PRINT_SOME, p->PAPI_EventSet);
         start = PAPI_get_real_usec();
 #endif //HAVE_PAPI
 
@@ -277,19 +268,16 @@ int execDStreamPlan(void *plan) {
         end = PAPI_get_real_usec(); //PAPI time
 
         /* Collect PAPI counters and store time elapsed */
-        retval = PAPI_accum(p->PAPI_EventSet, p->PAPI_Results);
-        if(retval != PAPI_OK) PAPI_EmitLog(retval, MyRank, 9999, PRINT_SOME);
+        TEST_PAPI(PAPI_accum, PAPI_OK, MyRank, 9999, PRINT_SOME, p->PAPI_EventSet, p->PAPI_Results);
         for(k=0; k<p->PAPI_Num_Events && k<TOTAL_PAPI_EVENTS; k++){
             p->PAPI_Times[k] += (end - start);
-            //snprintf(message, 512, "PAPI TEST: val = %llu\t time = %llu\n", p->PAPI_Results[k], p->PAPI_Times[k]);
-            //EmitLog(MyRank, 9999, message, -1, PRINT_ALWAYS);
         }
 #endif //HAVE_PAPI
 
 	perftimer_accumulate(&p->timers, TIMER0, ORB_cycles_a(t2, t1));
 	perftimer_accumulate(&p->timers, TIMER1, ORB_cycles_a(t2, t1));
 	
-        //TODO: put PAPI in here as well
+        //TODO: put PAPI in here as well(?)
 	if (CHECK_CALC) {
 		ORB_read(t1);
 		ret = StreamCheck(d);
