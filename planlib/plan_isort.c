@@ -152,20 +152,20 @@ int execISORTPlan(void *plan) { // <- Replace ISORT with the name of your module
                 d->numbers[i] = lrand48();
         }
 	ORB_read(t1);     // Store the timestamp for the beginning of the execution.
-        fprintf(stderr, "Starting sort\n");
+        /* fprintf(stderr, "Starting sort\n");
         for(i=0; i<d->array_size;i++){
                 fprintf(stderr," %llu\n",d->numbers[i]);
         }
-        fprintf(stderr,"\n");
+        fprintf(stderr,"\n"); */
         isort_quicksort(d->numbers,0,d->array_size-1);
         //qsort(d->numbers,d->array_size,sizeof(uint64_t),isort_cmp);
-        fprintf(stderr, "Done sort\n");
+/*#        fprintf(stderr, "Done sort\n");
         for(i=0; i<d->array_size;i++){
                 fprintf(stderr," %llu\n",d->numbers[i]);
         }
         fprintf(stderr,"\n");
         sleep(5);
-	
+*/	
 	ORB_read(t2);     // Store timestamp for the end of execution.
 	perftimer_accumulate(&p->timers, TIMER0, ORB_cycles_a(t2, t1));  // Store the difference between the timestamps in the plan's timers.
 	
