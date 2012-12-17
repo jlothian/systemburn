@@ -18,6 +18,7 @@ PLAN_SRC := $(DIR)/plan_comm.c \
 	$(DIR)/plan_write.c \
 	$(DIR)/plan_cba.c \
 	$(DIR)/plan_tilt.c \
+	$(DIR)/plan_isort.c \
 	$(DIR)/brand.c
 
 ifeq ($(ENABLE_BLAS),1)
