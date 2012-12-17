@@ -24,6 +24,16 @@
 #include <comm.h>
 
 #ifdef HAVE_PAPI
+/* Helper function to test PAPI return codes */
+inline void TEST_PAPI(int res, int test, int rank, int tnum, int debug){
+    char message[512];
+
+    if(res != test){
+        snprintf(message, 512, "PAPI error %d: %s\n", res, PAPI_strerror(res));
+        EmitLog(rank, tnum, message, -1, debug);
+    }
+}
+
 /* Helper function to intialize PAPI data structures */
 inline void PAPIRes_init(long long *results, long long *times){
     int i;
@@ -149,9 +159,11 @@ void performance_init () {
         
 #ifdef HAVE_PAPI
         /* Initialize PAPI and PAPI threads */
-        TEST_PAPI(PAPI_library_init, PAPI_VER_CURRENT, MyRank, SCHEDULER_THREAD, PRINT_ALWAYS, PAPI_VER_CURRENT);
+        //TEST_PAPI(PAPI_library_init, PAPI_VER_CURRENT, MyRank, SCHEDULER_THREAD, PRINT_ALWAYS, PAPI_VER_CURRENT);
+        TEST_PAPI(PAPI_library_init(PAPI_VER_CURRENT), PAPI_VER_CURRENT, MyRank, SCHEDULER_THREAD, PRINT_ALWAYS);
 
-        TEST_PAPI(PAPI_thread_init, PAPI_OK, MyRank, SCHEDULER_THREAD, PRINT_ALWAYS, pthread_self);
+        //TEST_PAPI(PAPI_thread_init, PAPI_OK, MyRank, SCHEDULER_THREAD, PRINT_ALWAYS, pthread_self);
+        TEST_PAPI(PAPI_thread_init(pthread_self), PAPI_OK, MyRank, SCHEDULER_THREAD, PRINT_ALWAYS);
 #endif //HAVE_PAPI
 
         /* Initialize performance tables */

@@ -33,6 +33,13 @@
 #else
 	#include <mpi.h>
 #endif
+
+#ifdef HAVE_PAPI
+#define NUM_PAPI_EVENTS 1 
+#define PAPI_COUNTERS { PAPI_FP_OPS } 
+#define PAPI_UNITS { "FLOPS" } 
+#endif //HAVE_PAPI
+
 /**
  * \brief Holds the custom error messages for the plan
  */
@@ -102,11 +109,41 @@ int  initCommPlan(void *plan) {
 	Plan *p;
 	COMMdata *d = NULL;
 	p = (Plan *)plan;
+
+#ifdef HAVE_PAPI
+        int temp_event, i;
+        int PAPI_Events [NUM_PAPI_EVENTS] = PAPI_COUNTERS;
+        char* PAPI_units [NUM_PAPI_EVENTS] = PAPI_UNITS;
+#endif //HAVE_PAPI
+
 	if (p) d = (COMMdata*)p->vptr;
 	assert(d);
 	
 	p->exec_count = 0;
 	perftimer_init(&p->timers, NUM_TIMERS);
+
+#ifdef HAVE_PAPI
+                /* Initialize plan's PAPI data */
+                p->PAPI_EventSet = PAPI_NULL;
+                p->PAPI_Num_Events = 0;
+
+                TEST_PAPI(PAPI_create_eventset(&p->PAPI_EventSet), PAPI_OK, MyRank, 9999, PRINT_SOME);
+                
+                //Add the desired events to the Event Set; ensure the dsired counters
+                //  are on the system then add, ignore otherwise
+                for(i=0; i<TOTAL_PAPI_EVENTS && i<NUM_PAPI_EVENTS; i++){
+                    temp_event = PAPI_Events[i];
+                    if(PAPI_query_event(temp_event) == PAPI_OK){
+                        p->PAPI_Num_Events++;
+                        TEST_PAPI(PAPI_add_event(p->PAPI_EventSet, temp_event), PAPI_OK, MyRank, 9999, PRINT_SOME);
+                    }
+                }
+
+                PAPIRes_init(p->PAPI_Results, p->PAPI_Times);
+                PAPI_set_units(p->name, PAPI_units, NUM_PAPI_EVENTS);
+        
+                TEST_PAPI(PAPI_start(p->PAPI_EventSet), PAPI_OK, MyRank, 9999, PRINT_SOME);
+#endif //HAVE_PAPI
 	
 	buflen = d->buflen;
 	ierr  = 0;
@@ -153,6 +190,11 @@ int  initCommPlan(void *plan) {
  * \sa killCommPlan
  */
 int execCommPlan(void *plan) {
+#ifdef HAVE_PAPI
+        int k;
+        long long start, end;
+#endif //HAVE_PAPI
+
 	int thatRankID, i;
 	ORB_t t1, t2;
 	Plan *p;
@@ -169,6 +211,12 @@ int execCommPlan(void *plan) {
 		/* update execution count */
 		p->exec_count++;
 		
+#ifdef HAVE_PAPI
+                /* Start PAPI counters and time */
+                TEST_PAPI(PAPI_reset(p->PAPI_EventSet), PAPI_OK, MyRank, 9999, PRINT_SOME);
+                start = PAPI_get_real_usec();
+#endif //HAVE_PAPI
+		
 		ORB_read(t1);
 		for (i = 0; i < d->NumMessages; i++) {
 			shmem_getmem(d->recvbufptr, d->sendbufptr, d->buflen, thatRankID);
@@ -180,6 +228,16 @@ int execCommPlan(void *plan) {
 		shmem_int_wait_until(&sync, SHMEM_CMP_EQ, thatRankID);
 		sync = d->ThisRankID;
 		ORB_read(t2);
+#ifdef HAVE_PAPI
+                end = PAPI_get_real_usec(); //PAPI time
+
+                /* Collect PAPI counters and store time elapsed */
+                TEST_PAPI(PAPI_accum(p->PAPI_EventSet, p->PAPI_Results), PAPI_OK, MyRank, 9999, PRINT_SOME);
+                for(k=0; k<p->PAPI_Num_Events && k<TOTAL_PAPI_EVENTS; k++){
+                    p->PAPI_Times[k] += (end - start);
+                }
+#endif //HAVE_PAPI
+
 		perftimer_accumulate(&p->timers, TIMER0, ORB_cycles_a(t2, t1));
 	}
 	shmem_barrier_all();
@@ -191,6 +249,12 @@ int execCommPlan(void *plan) {
 		/* update execution count */
 		p->exec_count++;
 		
+#ifdef HAVE_PAPI
+                /* Start PAPI counters and time */
+                TEST_PAPI(PAPI_reset(p->PAPI_EventSet), PAPI_OK, MyRank, 9999, PRINT_SOME);
+                start = PAPI_get_real_usec();
+#endif //HAVE_PAPI
+		
 		ORB_read(t1);
 		for (i = 0; i < d->NumMessages; i++) {
 			ierr += MPI_Sendrecv(d->sendbufptr, d->buflen, MPI_BYTE, thatRankID, 0,
@@ -198,6 +262,16 @@ int execCommPlan(void *plan) {
 					     MPI_COMM_WORLD, &mpistatus);
 		}
 		ORB_read(t2);
+#ifdef HAVE_PAPI
+                end = PAPI_get_real_usec(); //PAPI time
+
+                /* Collect PAPI counters and store time elapsed */
+                TEST_PAPI(PAPI_accum(p->PAPI_EventSet, p->PAPI_Results), PAPI_OK, MyRank, 9999, PRINT_SOME);
+                for(k=0; k<p->PAPI_Num_Events && k<TOTAL_PAPI_EVENTS; k++){
+                    p->PAPI_Times[k] += (end - start);
+                }
+#endif //HAVE_PAPI
+
 		perftimer_accumulate(&p->timers, TIMER0, ORB_cycles_a(t2,t1));
 		if (ierr != 0) return make_error(0,specific_err); // MPI error
 	}
@@ -230,6 +304,10 @@ int perfCommPlan(void *plan) {
 		
 		perf_table_update(&p->timers, opcounts, p->name);
 		
+#ifdef HAVE_PAPI
+		PAPI_table_update(p->name, p->PAPI_Results, p->PAPI_Times, p->PAPI_Num_Events);
+#endif //HAVE_PAPI
+		
 		double mbps = (((double)opcounts[TIMER0])/perftimer_gettime(&p->timers, TIMER0))/1e6;
 		EmitLogfs(MyRank, 9999, "COMM plan performance:", mbps, "MB/s", PRINT_SOME);
 		EmitLog  (MyRank, 9999, "COMM execution count :", p->exec_count, PRINT_SOME);
@@ -255,6 +333,11 @@ void * killCommPlan(void *plan) {
 	COMMdata *d;
 	p = (Plan *)plan;
 	d = (COMMdata*)p->vptr;
+
+#ifdef HAVE_PAPI
+        TEST_PAPI(PAPI_stop(p->PAPI_EventSet, NULL), PAPI_OK, MyRank, 9999, PRINT_SOME);
+#endif //HAVE_PAPI
+
 #ifdef HAVE_SHMEM
 	if (d->sendbufptr)shfree((void*)(d->sendbufptr));
 #else // MPI

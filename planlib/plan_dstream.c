@@ -117,8 +117,8 @@ int    initDStreamPlan(void *plan) {
 	DStreamdata *d = NULL;
 	p = (Plan *)plan;
 
-        int i;
 #ifdef HAVE_PAPI
+        int temp_event, i;
         int PAPI_Events [NUM_PAPI_EVENTS] = PAPI_COUNTERS;
         char* PAPI_units [NUM_PAPI_EVENTS] = PAPI_UNITS;
 #endif //HAVE_PAPI
@@ -128,26 +128,27 @@ int    initDStreamPlan(void *plan) {
 		p->exec_count = 0;
 		perftimer_init(&p->timers, NUM_TIMERS);
 
-                /* Initialize plan's PAPI data */
 #ifdef HAVE_PAPI
+                /* Initialize plan's PAPI data */
                 p->PAPI_EventSet = PAPI_NULL;
                 p->PAPI_Num_Events = 0;
 
-                TEST_PAPI(PAPI_create_eventset, PAPI_OK, MyRank, 9999, PRINT_SOME, &p->PAPI_EventSet);
+                TEST_PAPI(PAPI_create_eventset(&p->PAPI_EventSet), PAPI_OK, MyRank, 9999, PRINT_SOME);
                 
                 //Add the desired events to the Event Set; ensure the dsired counters
                 //  are on the system then add, ignore otherwise
                 for(i=0; i<TOTAL_PAPI_EVENTS && i<NUM_PAPI_EVENTS; i++){
-                    if(PAPI_query_event(PAPI_Events[i]) == PAPI_OK){
+                    temp_event = PAPI_Events[i];
+                    if(PAPI_query_event(temp_event) == PAPI_OK){
                         p->PAPI_Num_Events++;
-                        TEST_PAPI(PAPI_add_event, PAPI_OK, MyRank, 9999, PRINT_SOME, p->PAPI_EventSet, PAPI_Events[i]);
+                        TEST_PAPI(PAPI_add_event(p->PAPI_EventSet, temp_event), PAPI_OK, MyRank, 9999, PRINT_SOME);
                     }
                 }
 
                 PAPIRes_init(p->PAPI_Results, p->PAPI_Times);
                 PAPI_set_units(p->name, PAPI_units, NUM_PAPI_EVENTS);
         
-                TEST_PAPI(PAPI_start, PAPI_OK, MyRank, 9999, PRINT_SOME, p->PAPI_EventSet);
+                TEST_PAPI(PAPI_start(p->PAPI_EventSet), PAPI_OK, MyRank, 9999, PRINT_SOME);
 #endif //HAVE_PAPI
 	}
 	if(d) {
@@ -196,8 +197,9 @@ void * killDStreamPlan(void *plan) {
 	if(d->five)  free(d->five);
 
 #ifdef HAVE_PAPI
-        TEST_PAPI(PAPI_stop, PAPI_OK, MyRank, 9999, PRINT_SOME, p->PAPI_EventSet, NULL);
+        TEST_PAPI(PAPI_stop(p->PAPI_EventSet, NULL), PAPI_OK, MyRank, 9999, PRINT_SOME);
 #endif //HAVE_PAPI
+
 	free(d);
 	free(p);
 	return (void*)NULL;
@@ -242,7 +244,7 @@ int execDStreamPlan(void *plan) {
         
 #ifdef HAVE_PAPI
         /* Start PAPI counters and time */
-        TEST_PAPI(PAPI_reset, PAPI_OK, MyRank, 9999, PRINT_SOME, p->PAPI_EventSet);
+        TEST_PAPI(PAPI_reset(p->PAPI_EventSet), PAPI_OK, MyRank, 9999, PRINT_SOME);
         start = PAPI_get_real_usec();
 #endif //HAVE_PAPI
 
@@ -268,7 +270,7 @@ int execDStreamPlan(void *plan) {
         end = PAPI_get_real_usec(); //PAPI time
 
         /* Collect PAPI counters and store time elapsed */
-        TEST_PAPI(PAPI_accum, PAPI_OK, MyRank, 9999, PRINT_SOME, p->PAPI_EventSet, p->PAPI_Results);
+        TEST_PAPI(PAPI_accum(p->PAPI_EventSet, p->PAPI_Results), PAPI_OK, MyRank, 9999, PRINT_SOME);
         for(k=0; k<p->PAPI_Num_Events && k<TOTAL_PAPI_EVENTS; k++){
             p->PAPI_Times[k] += (end - start);
         }
@@ -316,7 +318,6 @@ int perfDStreamPlan (void *plan) {
 #endif //HAVE_PAPI
 
 	        //TODO: Insert some PAPI info here as well	
-		
 		double flops = ((double)opcounts[TIMER0]/perftimer_gettime(&p->timers, TIMER0))/1e6;
 		double mbps  = ((double)opcounts[TIMER1]/perftimer_gettime(&p->timers, TIMER1))/1e6;
 		EmitLogfs(MyRank, 9999, "DSTREAM plan performance:", flops, "MFLOPS", PRINT_SOME);

@@ -96,11 +96,11 @@ void * makeGUPSPlan(data *m) {
 int  initGUPSPlan(void *plan) {
 	int ret = make_error(ALLOC,generic_err);
 
-        int retval, i;
-#ifdef HAVE_PAPI
+    #ifdef HAVE_PAPI
+        int temp_event, i;
         int PAPI_Events [NUM_PAPI_EVENTS] = PAPI_COUNTERS;
         char* PAPI_units [NUM_PAPI_EVENTS] = PAPI_UNITS;
-#endif //HAVE_PAPI
+    #endif //HAVE_PAPI
 
 	Plan *p;
 	GUPSdata *d = NULL;
@@ -111,17 +111,31 @@ int  initGUPSPlan(void *plan) {
 		p->exec_count = 0;
 		perftimer_init(&p->timers, NUM_TIMERS);
 
-#ifdef HAVE_PAPI
+            #ifdef HAVE_PAPI
                 /* Initialize plan's PAPI data */
                 p->PAPI_EventSet = PAPI_NULL;
-                retval = PAPI_create_eventset(&p->PAPI_EventSet);
-                if(retval != PAPI_OK) PAPI_EmitLog(retval, MyRank, 9999, PRINT_SOME);
+                p->PAPI_Num_Events = 0;
+
+                //TEST_PAPI(PAPI_create_eventset, PAPI_OK, MyRank, 9999, PRINT_SOME, &p->PAPI_EventSet);
+                TEST_PAPI(PAPI_create_eventset(&p->PAPI_EventSet), PAPI_OK, MyRank, 9999, PRINT_SOME);
                 
-                retval = PAPI_add_events(p->PAPI_EventSet, PAPI_Events, NUM_PAPI_EVENTS);
-                if(retval != PAPI_OK) PAPI_EmitLog(retval, MyRank, 9999, PRINT_SOME);
+                //Add the desired events to the Event Set; ensure the dsired counters
+                //  are on the system then add, ignore otherwise
+                for(i=0; i<TOTAL_PAPI_EVENTS && i<NUM_PAPI_EVENTS; i++){
+                    temp_event = PAPI_Events[i];
+                    if(PAPI_query_event(temp_event) == PAPI_OK){
+                        p->PAPI_Num_Events++;
+                        //TEST_PAPI(PAPI_add_event, PAPI_OK, MyRank, 9999, PRINT_SOME, p->PAPI_EventSet, temp_event);
+                        TEST_PAPI(PAPI_add_event(p->PAPI_EventSet, temp_event), PAPI_OK, MyRank, 9999, PRINT_SOME);
+                    }
+                }
+
                 PAPIRes_init(p->PAPI_Results, p->PAPI_Times);
                 PAPI_set_units(p->name, PAPI_units, NUM_PAPI_EVENTS);
-#endif //HAVE_PAPI
+        
+                //TEST_PAPI(PAPI_start, PAPI_OK, MyRank, 9999, PRINT_SOME, p->PAPI_EventSet);
+                TEST_PAPI(PAPI_start(p->PAPI_EventSet), PAPI_OK, MyRank, 9999, PRINT_SOME);
+            #endif //HAVE_PAPI
                 //creat initializer for results?
 	}
 	// If the GUPS heap is valid, initialize GUPS variables.
@@ -176,8 +190,10 @@ void * killGUPSPlan(void *plan) {
 	if(d->sub) free((void*)(d->sub));
 	if(d->random) free((void*)(d->random));
 
-        //retval = PAPI_stop(p->PAPI_EventSet, NULL);  //don't know if this will work
-        //if(retval != PAPI_OK) PAPI_EmitLog(retval, MyRank, 9999, PRINT_SOME);
+    #ifdef HAVE_PAPI
+        //TEST_PAPI(PAPI_stop, PAPI_OK, MyRank, 9999, PRINT_SOME, p->PAPI_EventSet, NULL);
+        TEST_PAPI(PAPI_stop(p->PAPI_EventSet, NULL), PAPI_OK, MyRank, 9999, PRINT_SOME);
+    #endif //HAVE_PAPI
 
 	free((void*)(d));
 	free((void*)(p));
@@ -195,9 +211,11 @@ void * killGUPSPlan(void *plan) {
  * \sa killGUPSPlan
  */
 int execGUPSPlan(void *plan) {
+    #ifdef HAVE_PAPI
         /* PAPI vars */
-        int retval, k;
+        int k;
         long long start, end;
+    #endif //HAVE_PAPI
 
 	/* local vars */
 	int64_t i,j;
@@ -226,12 +244,12 @@ int execGUPSPlan(void *plan) {
 		ran[i] = GUPS_startRNG((nupdates/RSIZE)*i);
 
 
-#ifdef HAVE_PAPI
+    #ifdef HAVE_PAPI
         /* Start PAPI counters and time */
-        retval = PAPI_start(p->PAPI_EventSet);
-        if(retval != PAPI_OK) PAPI_EmitLog(retval, MyRank, 9999, PRINT_SOME);
+        //TEST_PAPI(PAPI_reset, PAPI_OK, MyRank, 9999, PRINT_SOME, p->PAPI_EventSet);
+        TEST_PAPI(PAPI_reset(p->PAPI_EventSet), PAPI_OK, MyRank, 9999, PRINT_SOME);
         start = PAPI_get_real_usec();
-#endif //HAVE_PAPI
+    #endif //HAVE_PAPI
 
 	ORB_read(t1);
 	/* perform updates to main table */
@@ -243,30 +261,24 @@ int execGUPSPlan(void *plan) {
 	}
 
 	ORB_read(t2);
-	perftimer_accumulate(&p->timers, TIMER0, ORB_cycles_a(t2, t1));
-#ifdef HAVE_PAPI
+
+    #ifdef HAVE_PAPI
         end = PAPI_get_real_usec(); //PAPI time
 
         /* Collect PAPI counters and store time elapsed */
-        retval = PAPI_accum(p->PAPI_EventSet, p->PAPI_Results);
-        if(retval != PAPI_OK) PAPI_EmitLog(retval, MyRank, 9999, PRINT_SOME);
-        for(k=0; k<NUM_PAPI_EVENTS; k++){
+        TEST_PAPI(PAPI_accum(p->PAPI_EventSet, p->PAPI_Results), PAPI_OK, MyRank, 9999, PRINT_SOME);
+        for(k=0; k<p->PAPI_Num_Events && k<TOTAL_PAPI_EVENTS; k++){
             p->PAPI_Times[k] += (end - start);
         }
-#endif //HAVE_PAPI
+    #endif //HAVE_PAPI
+
+	perftimer_accumulate(&p->timers, TIMER0, ORB_cycles_a(t2, t1));
 
 
 	/* verify results */
 	if (CHECK_CALC) {
 		uint64_t temp = 0x1;
                 
-#ifdef HAVE_PAPI
-                /* Restart PAPI counters */
-                retval = PAPI_reset(p->PAPI_EventSet);
-                if(retval != PAPI_OK) PAPI_EmitLog(retval, MyRank, 9999, PRINT_SOME);
-                start = PAPI_get_real_usec();
-#endif //HAVE_PAPI
-
 		ORB_read(t1);
 		for (i = 0; i < nupdates; i++) {
 			temp = (temp << 1) ^ (((int64_t) temp < 0) ? POLY : 0);
@@ -289,23 +301,9 @@ int execGUPSPlan(void *plan) {
                 ORB_read(t2);
 		perftimer_accumulate(&p->timers, TIMER1, ORB_cycles_a(t2, t1));
 
-#ifdef HAVE_PAPI
-                end = PAPI_get_real_usec(); //PAPI time
-                /* Collect PAPI counters */
-                retval = PAPI_accum(p->PAPI_EventSet, p->PAPI_Results);
-                if(retval != PAPI_OK) PAPI_EmitLog(retval, MyRank, 9999, PRINT_SOME);
-                for(k=0; k<NUM_PAPI_EVENTS; k++){
-                    p->PAPI_Times[k] += (end - start);
-                }
-#endif //HAVE_PAPI
 		if(errflag==1)
 			ret = make_error(CALC,generic_err);
 	}
-#ifdef HAVE_PAPI
-        /* Stop PAPI counters */
-        retval = PAPI_stop(p->PAPI_EventSet, NULL);
-        if(retval != PAPI_OK) PAPI_EmitLog(retval, MyRank, 9999, PRINT_SOME);
-#endif //HAVE_PAPI
 
 	return ret;
 }
@@ -336,9 +334,9 @@ int perfGUPSPlan(void *plan) {
 		
                 /* Additionally, passing PAPI_Results to be collected */
 		perf_table_update(&p->timers, opcounts, p->name);
-#ifdef HAVE_PAPI
+            #ifdef HAVE_PAPI
 		PAPI_table_update(p->name, p->PAPI_Results, p->PAPI_Times, NUM_PAPI_EVENTS);
-#endif //HAVE_PAPI
+            #endif //HAVE_PAPI
 		
                 //TODO: add place to present PAPI data
 		double gups = ((double)opcounts[TIMER0]/perftimer_gettime(&p->timers, TIMER0))/(1e9);

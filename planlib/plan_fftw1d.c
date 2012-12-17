@@ -21,6 +21,12 @@
 #include <systemburn.h>
 #include <planheaders.h>
 
+#ifdef HAVE_PAPI
+#define NUM_PAPI_EVENTS 1 
+#define PAPI_COUNTERS { PAPI_FP_OPS } 
+#define PAPI_UNITS { "FLOPS" } 
+#endif //HAVE_PAPI
+
 // Declare and initialize the FFTW lock that must be 
 // used by all plans using the fftw3 library.
 pthread_rwlock_t FFTW_Lock = PTHREAD_RWLOCK_INITIALIZER;
@@ -86,10 +92,40 @@ int    initFFT1Plan(void *plan) {
 	Plan *p;
 	FFTdata *d = NULL;
 	p = (Plan *)plan;
+
+#ifdef HAVE_PAPI
+        int temp_event, i;
+        int PAPI_Events [NUM_PAPI_EVENTS] = PAPI_COUNTERS;
+        char* PAPI_units [NUM_PAPI_EVENTS] = PAPI_UNITS;
+#endif //HAVE_PAPI
+
 	if (p) {
 		d = (FFTdata*)p->vptr;
 		p->exec_count = 0;
 		perftimer_init(&p->timers, NUM_TIMERS);
+
+#ifdef HAVE_PAPI
+                /* Initialize plan's PAPI data */
+                p->PAPI_EventSet = PAPI_NULL;
+                p->PAPI_Num_Events = 0;
+
+                TEST_PAPI(PAPI_create_eventset(&p->PAPI_EventSet), PAPI_OK, MyRank, 9999, PRINT_SOME);
+                
+                //Add the desired events to the Event Set; ensure the dsired counters
+                //  are on the system then add, ignore otherwise
+                for(i=0; i<TOTAL_PAPI_EVENTS && i<NUM_PAPI_EVENTS; i++){
+                    temp_event = PAPI_Events[i];
+                    if(PAPI_query_event(temp_event) == PAPI_OK){
+                        p->PAPI_Num_Events++;
+                        TEST_PAPI(PAPI_add_event(p->PAPI_EventSet, temp_event), PAPI_OK, MyRank, 9999, PRINT_SOME);
+                    }
+                }
+
+                PAPIRes_init(p->PAPI_Results, p->PAPI_Times);
+                PAPI_set_units(p->name, PAPI_units, NUM_PAPI_EVENTS);
+        
+                TEST_PAPI(PAPI_start(p->PAPI_EventSet), PAPI_OK, MyRank, 9999, PRINT_SOME);
+#endif //HAVE_PAPI
 	}
 	if (d) {
 		M = d->M;
@@ -139,6 +175,11 @@ void * killFFT1Plan(void *plan) {
 	//EmitLog(MyRank,100,"Freeing   ",sadk*d->M*3,0);
 
 	pthread_rwlock_wrlock(&FFTW_Lock);
+
+#ifdef HAVE_PAPI
+        TEST_PAPI(PAPI_stop(p->PAPI_EventSet, NULL), PAPI_OK, MyRank, 9999, PRINT_SOME);
+#endif //HAVE_PAPI
+
 	if(d->in_original) fftw_free(d->in_original);
 	if(d->out)         fftw_free(d->out);
 	if(d->mid)         fftw_free(d->mid);
@@ -161,6 +202,11 @@ void * killFFT1Plan(void *plan) {
  * \sa killFFT1Plan
  */
 int execFFT1Plan(void *plan) {
+#ifdef HAVE_PAPI
+        int k;
+        long long start, end;
+#endif //HAVE_PAPI
+
 	int i;
 	ORB_t t1, t2;
 	Plan *p;
@@ -172,15 +218,49 @@ int execFFT1Plan(void *plan) {
 	
 //	for(i=0;i<d->M;i++) {	// Was running so long that no performance data could be retrieved.
 	if(d->forward) {
+            #ifdef HAVE_PAPI
+                /* Start PAPI counters and time */
+                TEST_PAPI(PAPI_reset(p->PAPI_EventSet), PAPI_OK, MyRank, 9999, PRINT_SOME);
+                start = PAPI_get_real_usec();
+            #endif //HAVE_PAPI
+
 		ORB_read(t1);
 		fftw_execute(d->forward);
 		ORB_read(t2);
+
+            #ifdef HAVE_PAPI
+                end = PAPI_get_real_usec(); //PAPI time
+
+                /* Collect PAPI counters and store time elapsed */
+                TEST_PAPI(PAPI_accum(p->PAPI_EventSet, p->PAPI_Results), PAPI_OK, MyRank, 9999, PRINT_SOME);
+                for(k=0; k<p->PAPI_Num_Events && k<TOTAL_PAPI_EVENTS; k++){
+                    p->PAPI_Times[k] += (end - start);
+                }
+            #endif //HAVE_PAPI
+
 		perftimer_accumulate(&p->timers, TIMER0, ORB_cycles_a(t2, t1));
 	}
 	if(d->backward) {
+            #ifdef HAVE_PAPI
+                /* Start PAPI counters and time */
+                TEST_PAPI(PAPI_reset(p->PAPI_EventSet), PAPI_OK, MyRank, 9999, PRINT_SOME);
+                start = PAPI_get_real_usec();
+            #endif //HAVE_PAPI
+
 		ORB_read(t1);
 		fftw_execute(d->backward);
 		ORB_read(t2);
+
+            #ifdef HAVE_PAPI
+                end = PAPI_get_real_usec(); //PAPI time
+
+                /* Collect PAPI counters and store time elapsed */
+                TEST_PAPI(PAPI_accum(p->PAPI_EventSet, p->PAPI_Results), PAPI_OK, MyRank, 9999, PRINT_SOME);
+                for(k=0; k<p->PAPI_Num_Events && k<TOTAL_PAPI_EVENTS; k++){
+                    p->PAPI_Times[k] += (end - start);
+                }
+            #endif //HAVE_PAPI
+
 		perftimer_accumulate(&p->timers, TIMER1, ORB_cycles_a(t2, t1));
 	}
 //	}
@@ -210,6 +290,9 @@ int perfFFT1Plan(void *plan) {
 		opcounts[TIMER2] = 0;
 		
 		perf_table_update(&p->timers, opcounts, p->name);
+            #ifdef HAVE_PAPI
+		PAPI_table_update(p->name, p->PAPI_Results, p->PAPI_Times, p->PAPI_Num_Events);
+            #endif //HAVE_PAPI
 		
 		double flops_forward = ((double)opcounts[TIMER0]/perftimer_gettime(&p->timers, TIMER0))/1e6;
 		EmitLogfs(MyRank, 9999, "FFT1D plan performance:", flops_forward, "MFLOPS", PRINT_SOME);
