@@ -192,7 +192,7 @@ void * killLStridePlan(void *plan) {
  */
 int execLStridePlan(void *plan) {
     #ifdef HAVE_PAPI
-        int k;
+        int j;
         long long start, end;
     #endif //HAVE_PAPI
 
@@ -233,8 +233,8 @@ int execLStridePlan(void *plan) {
 
         /* Collect PAPI counters and store time elapsed */
         TEST_PAPI(PAPI_accum(p->PAPI_EventSet, p->PAPI_Results), PAPI_OK, MyRank, 9999, PRINT_SOME);
-        for(k=0; k<p->PAPI_Num_Events && k<TOTAL_PAPI_EVENTS; k++){
-            p->PAPI_Times[k] += (end - start);
+        for(j=0; j<p->PAPI_Num_Events && j<TOTAL_PAPI_EVENTS; j++){
+            p->PAPI_Times[j] += (end - start);
         }
     #endif //HAVE_PAPI
 
