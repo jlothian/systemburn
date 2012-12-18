@@ -68,7 +68,7 @@ int initialize(int argc, char* argv[], char **log_file, char **config_file, char
 	int   log_flag  = 0;
 	int   n         = 0;
 	char *verb      = NULL;
-	char  options[] = "c:f:l::n:tv::h";
+	char  options[] = "c:f:l::n:tpv::h";
 	
 	/* Using commandline options and arguments, determine filenames of files to open. */
 	while ((c = getopt(argc, argv, options)) != -1) {
@@ -89,6 +89,9 @@ int initialize(int argc, char* argv[], char **log_file, char **config_file, char
 			case 'v':
 				verb = optarg;
 				break;
+                        case 'p':       /* disable collection of performance stats */
+                                planperf_flag = 0;
+                                break;
 			case 't':
 				plancheck_flag = 1;
 				break;

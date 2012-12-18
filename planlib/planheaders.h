@@ -59,6 +59,7 @@
 
 // Test plancheck_flag to see if calculation error checking is enabled:
 #define CHECK_CALC (plancheck_flag == 1)
+#define DO_PERF (planperf_flag == 1)
 
 /**
  * \brief This structure contains the "plan" information for a thread.

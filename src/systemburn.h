@@ -75,6 +75,7 @@ extern int          MyRank;
 extern int          comm_flag;
 extern int          verbose_flag;
 extern int          plancheck_flag;
+extern int          planperf_flag;
 
 enum { BAD, GOOD};
 enum { SINGLE=1, ARRAY=255};

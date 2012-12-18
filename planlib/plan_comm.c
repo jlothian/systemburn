@@ -120,7 +120,8 @@ int  initCommPlan(void *plan) {
 	assert(d);
 	
 	p->exec_count = 0;
-	perftimer_init(&p->timers, NUM_TIMERS);
+        if (DO_PERF){
+                perftimer_init(&p->timers, NUM_TIMERS);
 
 #ifdef HAVE_PAPI
                 /* Initialize plan's PAPI data */
@@ -144,6 +145,7 @@ int  initCommPlan(void *plan) {
         
                 TEST_PAPI(PAPI_start(p->PAPI_EventSet), PAPI_OK, MyRank, 9999, PRINT_SOME);
 #endif //HAVE_PAPI
+        } //DO_PERF
 	
 	buflen = d->buflen;
 	ierr  = 0;
@@ -211,13 +213,15 @@ int execCommPlan(void *plan) {
 		/* update execution count */
 		p->exec_count++;
 		
+                if (DO_PERF){
 #ifdef HAVE_PAPI
-                /* Start PAPI counters and time */
-                TEST_PAPI(PAPI_reset(p->PAPI_EventSet), PAPI_OK, MyRank, 9999, PRINT_SOME);
-                start = PAPI_get_real_usec();
+                        /* Start PAPI counters and time */
+                        TEST_PAPI(PAPI_reset(p->PAPI_EventSet), PAPI_OK, MyRank, 9999, PRINT_SOME);
+                        start = PAPI_get_real_usec();
 #endif //HAVE_PAPI
 		
-		ORB_read(t1);
+                        ORB_read(t1);
+                } //DO_PERF
 		for (i = 0; i < d->NumMessages; i++) {
 			shmem_getmem(d->recvbufptr, d->sendbufptr, d->buflen, thatRankID);
 		}
@@ -227,18 +231,20 @@ int execCommPlan(void *plan) {
 		// If wanted to check, could compare other to thatRankID (should be equal).
 		shmem_int_wait_until(&sync, SHMEM_CMP_EQ, thatRankID);
 		sync = d->ThisRankID;
-		ORB_read(t2);
+                if (DO_PERF){
+                        ORB_read(t2);
 #ifdef HAVE_PAPI
-                end = PAPI_get_real_usec(); //PAPI time
+                        end = PAPI_get_real_usec(); //PAPI time
 
-                /* Collect PAPI counters and store time elapsed */
-                TEST_PAPI(PAPI_accum(p->PAPI_EventSet, p->PAPI_Results), PAPI_OK, MyRank, 9999, PRINT_SOME);
-                for(k=0; k<p->PAPI_Num_Events && k<TOTAL_PAPI_EVENTS; k++){
-                    p->PAPI_Times[k] += (end - start);
-                }
+                        /* Collect PAPI counters and store time elapsed */
+                        TEST_PAPI(PAPI_accum(p->PAPI_EventSet, p->PAPI_Results), PAPI_OK, MyRank, 9999, PRINT_SOME);
+                        for(k=0; k<p->PAPI_Num_Events && k<TOTAL_PAPI_EVENTS; k++){
+                            p->PAPI_Times[k] += (end - start);
+                        }
 #endif //HAVE_PAPI
 
-		perftimer_accumulate(&p->timers, TIMER0, ORB_cycles_a(t2, t1));
+                        perftimer_accumulate(&p->timers, TIMER0, ORB_cycles_a(t2, t1));
+                } //DO_PERF
 	}
 	shmem_barrier_all();
 #else // MPI
@@ -248,31 +254,36 @@ int execCommPlan(void *plan) {
 		ierr = 0;
 		/* update execution count */
 		p->exec_count++;
+
+                if (DO_PERF){
 		
 #ifdef HAVE_PAPI
-                /* Start PAPI counters and time */
-                TEST_PAPI(PAPI_reset(p->PAPI_EventSet), PAPI_OK, MyRank, 9999, PRINT_SOME);
-                start = PAPI_get_real_usec();
+                        /* Start PAPI counters and time */
+                        TEST_PAPI(PAPI_reset(p->PAPI_EventSet), PAPI_OK, MyRank, 9999, PRINT_SOME);
+                        start = PAPI_get_real_usec();
 #endif //HAVE_PAPI
 		
-		ORB_read(t1);
+                        ORB_read(t1);
+                } //DO_PERF
 		for (i = 0; i < d->NumMessages; i++) {
 			ierr += MPI_Sendrecv(d->sendbufptr, d->buflen, MPI_BYTE, thatRankID, 0,
 					     d->recvbufptr, d->buflen, MPI_BYTE, thatRankID, 0,
 					     MPI_COMM_WORLD, &mpistatus);
 		}
-		ORB_read(t2);
+                if (DO_PERF){
+                        ORB_read(t2);
 #ifdef HAVE_PAPI
                 end = PAPI_get_real_usec(); //PAPI time
 
-                /* Collect PAPI counters and store time elapsed */
-                TEST_PAPI(PAPI_accum(p->PAPI_EventSet, p->PAPI_Results), PAPI_OK, MyRank, 9999, PRINT_SOME);
-                for(k=0; k<p->PAPI_Num_Events && k<TOTAL_PAPI_EVENTS; k++){
-                    p->PAPI_Times[k] += (end - start);
-                }
+                        /* Collect PAPI counters and store time elapsed */
+                        TEST_PAPI(PAPI_accum(p->PAPI_EventSet, p->PAPI_Results), PAPI_OK, MyRank, 9999, PRINT_SOME);
+                        for(k=0; k<p->PAPI_Num_Events && k<TOTAL_PAPI_EVENTS; k++){
+                            p->PAPI_Times[k] += (end - start);
+                        }
 #endif //HAVE_PAPI
 
-		perftimer_accumulate(&p->timers, TIMER0, ORB_cycles_a(t2,t1));
+                        perftimer_accumulate(&p->timers, TIMER0, ORB_cycles_a(t2,t1));
+                } //DO_PERF
 		if (ierr != 0) return make_error(0,specific_err); // MPI error
 	}
 #endif

@@ -93,30 +93,32 @@ int  initWritePlan(void *plan) {
 	if (p) {
 		wi = (Writedata *)p->vptr;
 		p->exec_count = 0;
-		perftimer_init(&p->timers, NUM_TIMERS);
+                if(DO_PERF){
+                        perftimer_init(&p->timers, NUM_TIMERS);
 
-            #ifdef HAVE_PAPI
-                /* Initialize plan's PAPI data */
-                p->PAPI_EventSet = PAPI_NULL;
-                p->PAPI_Num_Events = 0;
+#ifdef HAVE_PAPI
+                        /* Initialize plan's PAPI data */
+                        p->PAPI_EventSet = PAPI_NULL;
+                        p->PAPI_Num_Events = 0;
 
-                TEST_PAPI(PAPI_create_eventset(&p->PAPI_EventSet), PAPI_OK, MyRank, 9999, PRINT_SOME);
+                        TEST_PAPI(PAPI_create_eventset(&p->PAPI_EventSet), PAPI_OK, MyRank, 9999, PRINT_SOME);
+                        
+                        //Add the desired events to the Event Set; ensure the dsired counters
+                        //  are on the system then add, ignore otherwise
+                        for(i=0; i<TOTAL_PAPI_EVENTS && i<NUM_PAPI_EVENTS; i++){
+                            temp_event = PAPI_Events[i];
+                            if(PAPI_query_event(temp_event) == PAPI_OK){
+                                p->PAPI_Num_Events++;
+                                TEST_PAPI(PAPI_add_event(p->PAPI_EventSet, temp_event), PAPI_OK, MyRank, 9999, PRINT_SOME);
+                            }
+                        }
+
+                        PAPIRes_init(p->PAPI_Results, p->PAPI_Times);
+                        PAPI_set_units(p->name, PAPI_units, NUM_PAPI_EVENTS);
                 
-                //Add the desired events to the Event Set; ensure the dsired counters
-                //  are on the system then add, ignore otherwise
-                for(i=0; i<TOTAL_PAPI_EVENTS && i<NUM_PAPI_EVENTS; i++){
-                    temp_event = PAPI_Events[i];
-                    if(PAPI_query_event(temp_event) == PAPI_OK){
-                        p->PAPI_Num_Events++;
-                        TEST_PAPI(PAPI_add_event(p->PAPI_EventSet, temp_event), PAPI_OK, MyRank, 9999, PRINT_SOME);
-                    }
-                }
-
-                PAPIRes_init(p->PAPI_Results, p->PAPI_Times);
-                PAPI_set_units(p->name, PAPI_units, NUM_PAPI_EVENTS);
-        
-                TEST_PAPI(PAPI_start(p->PAPI_EventSet), PAPI_OK, MyRank, 9999, PRINT_SOME);
-            #endif //HAVE_PAPI
+                        TEST_PAPI(PAPI_start(p->PAPI_EventSet), PAPI_OK, MyRank, 9999, PRINT_SOME);
+#endif //HAVE_PAPI
+                } //DO_PERF
 	}
 	if (wi) {
 		wi->buff_len = (wi->mb * MIBYTE) / sizeof(int);
@@ -181,25 +183,29 @@ int execWritePlan(void *plan) {
 	int num_blocks = wi->buff_len * sizeof(int) / block_size;
 	int i;
 
-    #ifdef HAVE_PAPI
-        /* Start PAPI counters and time */
-        TEST_PAPI(PAPI_reset(p->PAPI_EventSet), PAPI_OK, MyRank, 9999, PRINT_SOME);
-        start = PAPI_get_real_usec();
-    #endif //HAVE_PAPI
-
-	ORB_read(t1);
-	ret = write(wi->fdout, wi->buff, wi->buff_len * sizeof(int));
-	ORB_read(t2);
-
-    #ifdef HAVE_PAPI
-        end = PAPI_get_real_usec(); //PAPI time
-
-        /* Collect PAPI counters and store time elapsed */
-        TEST_PAPI(PAPI_accum(p->PAPI_EventSet, p->PAPI_Results), PAPI_OK, MyRank, 9999, PRINT_SOME);
-        for(k=0; k<p->PAPI_Num_Events && k<TOTAL_PAPI_EVENTS; k++){
-            p->PAPI_Times[k] += (end - start);
+        if(DO_PERF){
+#ifdef HAVE_PAPI
+                /* Start PAPI counters and time */
+                TEST_PAPI(PAPI_reset(p->PAPI_EventSet), PAPI_OK, MyRank, 9999, PRINT_SOME);
+                start = PAPI_get_real_usec();
+#endif //HAVE_PAPI
+                ORB_read(t1);
         }
-    #endif //HAVE_PAPI
+
+	ret = write(wi->fdout, wi->buff, wi->buff_len * sizeof(int));
+	
+        if(DO_PERF){
+                ORB_read(t2);
+#ifdef HAVE_PAPI
+                end = PAPI_get_real_usec(); //PAPI time
+                /* Collect PAPI counters and store time elapsed */
+                TEST_PAPI(PAPI_accum(p->PAPI_EventSet, p->PAPI_Results), PAPI_OK, MyRank, 9999, PRINT_SOME);
+                for(k=0; k<p->PAPI_Num_Events && k<TOTAL_PAPI_EVENTS; k++){
+                    p->PAPI_Times[k] += (end - start);
+                }
+#endif //HAVE_PAPI
+                perftimer_accumulate(&p->timers, TIMER0, ORB_cycles_a(t2, t1));
+        } //DO_PERF
 
 	if(ret != wi->buff_len * sizeof(int)) {  // < 0) {
 		perror("Write failure. ");
@@ -214,7 +220,6 @@ int execWritePlan(void *plan) {
 // 			return ERR_WRITE_FILE;
 // 		}
 // 	}
-	perftimer_accumulate(&p->timers, TIMER0, ORB_cycles_a(t2, t1));
 	return ERR_CLEAN;
 }
 
