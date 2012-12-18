@@ -79,7 +79,7 @@ int    initFFT2Plan(void *plan) {
 	p = (Plan *)plan;
 
     #ifdef HAVE_PAPI
-        int temp_event, i;
+        int temp_event, j;
         int PAPI_Events [NUM_PAPI_EVENTS] = PAPI_COUNTERS;
         char* PAPI_units [NUM_PAPI_EVENTS] = PAPI_UNITS;
     #endif //HAVE_PAPI
@@ -98,8 +98,8 @@ int    initFFT2Plan(void *plan) {
                 
                 //Add the desired events to the Event Set; ensure the dsired counters
                 //  are on the system then add, ignore otherwise
-                for(i=0; i<TOTAL_PAPI_EVENTS && i<NUM_PAPI_EVENTS; i++){
-                    temp_event = PAPI_Events[i];
+                for(j=0; j<TOTAL_PAPI_EVENTS && j<NUM_PAPI_EVENTS; j++){
+                    temp_event = PAPI_Events[j];
                     if(PAPI_query_event(temp_event) == PAPI_OK){
                         p->PAPI_Num_Events++;
                         TEST_PAPI(PAPI_add_event(p->PAPI_EventSet, temp_event), PAPI_OK, MyRank, 9999, PRINT_SOME);

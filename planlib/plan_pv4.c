@@ -82,7 +82,7 @@ int    initPV4Plan(void *plan) {
 	p = (Plan *)plan;
 
     #ifdef HAVE_PAPI
-        int temp_event, i;
+        int temp_event, k;
         int PAPI_Events [NUM_PAPI_EVENTS] = PAPI_COUNTERS;
         char* PAPI_units [NUM_PAPI_EVENTS] = PAPI_UNITS;
     #endif //HAVE_PAPI
@@ -101,7 +101,7 @@ int    initPV4Plan(void *plan) {
                 
                 //Add the desired events to the Event Set; ensure the dsired counters
                 //  are on the system then add, ignore otherwise
-                for(i=0; i<TOTAL_PAPI_EVENTS && i<NUM_PAPI_EVENTS; i++){
+                for(k=0; k<TOTAL_PAPI_EVENTS && k<NUM_PAPI_EVENTS; k++){
                     temp_event = PAPI_Events[i];
                     if(PAPI_query_event(temp_event) == PAPI_OK){
                         p->PAPI_Num_Events++;
@@ -189,7 +189,7 @@ void * killPV4Plan(void *plan) {
  */
 int execPV4Plan(void *plan) {
     #ifdef HAVE_PAPI
-        int k;
+        int q;
         long long start, end;
     #endif //HAVE_PAPI
 
@@ -250,8 +250,8 @@ int execPV4Plan(void *plan) {
 
         /* Collect PAPI counters and store time elapsed */
         TEST_PAPI(PAPI_accum(p->PAPI_EventSet, p->PAPI_Results), PAPI_OK, MyRank, 9999, PRINT_SOME);
-        for(k=0; k<p->PAPI_Num_Events && k<TOTAL_PAPI_EVENTS; k++){
-            p->PAPI_Times[k] += (end - start);
+        for(q=0; q<p->PAPI_Num_Events && q<TOTAL_PAPI_EVENTS; q++){
+            p->PAPI_Times[q] += (end - start);
         }
     #endif //HAVE_PAPI
 
