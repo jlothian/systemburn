@@ -244,6 +244,7 @@ void printHelpText() {
 	printf("  -c <comm msgsize>  Runs a communication load with specific message sizes.\n");
 	printf("  -n <# load files>  The number of files specifed as non-option arguments to systemburn.\n");
 	printf("  -v <output level>  Determines the amount of output, with 0 the default and 3 the most.\n");
+	printf("  -p                 Disable calculation and output of performance statistics.\n");
 	printf("  -t                 Enables calculation checks in running load, when available.\n");
 	printf("  -h                 Displays this help text and exits.\n");
 	printf("\n");
