@@ -140,22 +140,28 @@ void * WorkerThread(void *p) {
 		BossPlan = MyHandle->Plan;
 		pthread_rwlock_unlock( &(MyHandle->Lock) );
 		if (BossPlan == NULL) {
-			EmitLog(MyRank, MyHandle->Num, "Printing performance data.", -1, PRINT_SOME);
-			perf_flag = perfPlan(WorkerPlan);
-			if (perf_flag != ERR_CLEAN) {
-				EmitLog(MyRank, MyHandle->Num, "Performance recording error flag triggered, error number:", perf_flag, PRINT_SOME);
-			}
+                        if(DO_PERF){
+                                EmitLog(MyRank, MyHandle->Num, "Printing performance data.", -1, PRINT_SOME);
+                                perf_flag = perfPlan(WorkerPlan);
+                                if (perf_flag != ERR_CLEAN) {
+                                        EmitLog(MyRank, MyHandle->Num, "Performance recording error flag triggered, error number:", perf_flag, PRINT_SOME);
+                                }
+                        }
 			EmitLog(MyRank, MyHandle->Num, "Thread exiting", -1, PRINT_SOME);
+                        fprintf(stderr,"Killing a plan!\n");
 			WorkerPlan = killPlan(WorkerPlan);              /* clean up old plan       */
+                        fprintf(stderr,"... done Killing a plan!\n");
 			pthread_exit((void*)0);
 		} else {
 			if (BossPlan != WorkerPlan) {                   /* if the plan was updated */
 				if (WorkerPlan != NULL && WorkerPlan->name != SLEEP) {
-					EmitLog(MyRank, MyHandle->Num, "Printing performance data.", -1, PRINT_SOME);
-					perf_flag = perfPlan(WorkerPlan);
-					if (perf_flag != ERR_CLEAN) {
-						EmitLog(MyRank, MyHandle->Num, "Performance recording error flag triggered, error number:", perf_flag, PRINT_SOME);
-					}
+                                        if(DO_PERF){
+                                                EmitLog(MyRank, MyHandle->Num, "Printing performance data.", -1, PRINT_SOME);
+                                                perf_flag = perfPlan(WorkerPlan);
+                                                if (perf_flag != ERR_CLEAN) {
+                                                        EmitLog(MyRank, MyHandle->Num, "Performance recording error flag triggered, error number:", perf_flag, PRINT_SOME);
+                                                }
+                                        }
 				}
 #ifdef LINUX_PLACEMENT
 				numcpucores = sysconf(_SC_NPROCESSORS_ONLN);
