@@ -221,6 +221,11 @@ void SetMasks(int numcpucores, cpu_set_t *cpuset, Load *input) {
         } 
 }	
 
+/** \brief Sets the cpuset lengths and integer representations for subloads
+ \param numcpucores Number of cores available to be set
+ \param cpuset CPU sets in use
+ \param input The load struct to calculate lengths for
+ */
 void SetCPUSetLens(int numcpucores, cpu_set_t *cpuset, Load *input){
         int i,j,k;
         SubLoad *subload_ptr = input->front;
