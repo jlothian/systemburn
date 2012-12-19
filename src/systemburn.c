@@ -246,9 +246,9 @@ int main(int argc, char** argv, char **envp) {
 	}
 	
 	sleep(thermal_relaxation_time);
-	sleep(60);
 	
         if (DO_PERF){
+                sleep(30);
                 perf_table_print(LOCAL, PRINT_OFTEN);
                 perf_table_reduce();
                 
