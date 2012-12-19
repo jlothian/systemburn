@@ -93,6 +93,7 @@ extern void MaskRoundRobin(int numcpucores, cpu_set_t *cpuset, int num_cpusets);
 extern void MaskSpecific(int numcpucores, cpu_set_t *cpus, Load *input);
 extern void ZeroMask(cpu_set_t *cpuset, int num_cpusets);
 extern void SetMasks(int numcpucores, cpu_set_t *cpuset, Load *input);
+extern void SetCPUSetLens(int numcpucores, cpu_set_t *cpuset, Load *input);
 #endif /* LINUX_PLACEMENT */
 
 #endif /* __LOAD_H */

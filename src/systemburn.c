@@ -197,9 +197,9 @@ int main(int argc, char** argv, char **envp) {
 		err += parseLoad(load_buffer, &load_data);
 		free(load_buffer);
 		// err = bcastLoad(&load_data); 			// Broadcast the load structure to all nodes (processes).
+		err=WorkerSched(&load_data);				// Assign the load to worker threads and check for errors
 		if (MyRank == ROOT)
 			printLoad(&load_data); 				// Print the load data to the terminal.
-		err=WorkerSched(&load_data);				// Assign the load to worker threads and check for errors
 		if (err != ERR_CLEAN) errorFlags[SYSTEM + 1][err]++; 
 #define SB_CONTINUE      0x0
 #define SB_LAST_TRIP     0x1
