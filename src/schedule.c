@@ -57,6 +57,7 @@ int WorkerSched(Load *load) {
 	EmitLog(MyRank, SCHEDULER_THREAD, "Number of cores on this machine:", cores, PRINT_RARELY);
 
 	SetMasks(cores, cpuset, load);
+        SetCPUSetLens(cores, cpuset, load);
 #endif
 
 	/* If the load requires more threads than available, warn the user that only a part of the load will run. */
@@ -219,4 +220,28 @@ void SetMasks(int numcpucores, cpu_set_t *cpuset, Load *input) {
 		}
         } 
 }	
+
+/** \brief Sets the cpuset lengths and integer representations for subloads
+ \param numcpucores Number of cores available to be set
+ \param cpuset CPU sets in use
+ \param input The load struct to calculate lengths for
+ */
+void SetCPUSetLens(int numcpucores, cpu_set_t *cpuset, Load *input){
+        int i,j,k;
+        SubLoad *subload_ptr = input->front;
+        for(i=0; i<input->num_cpusets; i++){
+                subload_ptr->cpuset_len = CPU_COUNT(&cpuset[i]);
+                subload_ptr->cpuset = (int *)malloc(subload_ptr->cpuset_len*sizeof(int));
+                k=0;
+                for(j=0; j<numcpucores; j++){
+                        if(CPU_ISSET(j, &cpuset[i])){
+                                subload_ptr->cpuset[k]=j;
+                                k++;
+                        }
+                }
+                subload_ptr = subload_ptr->next;
+        }
+
+}
+
 #endif /* LINUX_PLACEMENT */

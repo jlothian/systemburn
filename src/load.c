@@ -734,7 +734,7 @@ void printLoad(Load *input) {
 			k_flag = 0;
 			fprintf(out, "\n   ");
 			for (j = 0; j < OUTPUT_STEP && sub_index[j] != NULL; j++) {
-				if (sub_index[j]->cpuset_len > k) {
+				if (sub_index[j]->cpuset_len > CPUSET_OUTPUT_STEP*count) {
 					fprintf(out, "%8c", ' ');
 					for (k = CPUSET_OUTPUT_STEP*count; k < sub_index[j]->cpuset_len && k < CPUSET_OUTPUT_STEP*(count+1); k++)
 						fprintf(out, "%-3d", sub_index[j]->cpuset[k]);
