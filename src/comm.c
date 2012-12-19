@@ -171,7 +171,7 @@ void reduceTemps_MPI() {
 		MPI_Comm_size(MPI_COMM_WORLD,&commsize);
 		tavg = tavg / commsize;
 		if (tmin <= tmax) {
-			EmitLog3f(MyRank, SCHEDULER_THREAD, "The minumum/average/maximum temperature across all cores (C) ", tmin, tavg, tmax, PRINT_ALWAYS);
+			EmitLog3f(MyRank, SCHEDULER_THREAD, "The minimum/average/maximum temperature across all cores (C) ", tmin, tavg, tmax, PRINT_ALWAYS);
 		} else {
 			EmitLog(MyRank, SCHEDULER_THREAD, "No valid temperature monitoring interface on this platform.", -1, PRINT_ALWAYS);
 		}
@@ -209,7 +209,7 @@ void reduceTemps_SHMEM() {
 	if (MyRank == ROOT) {
 		tavg = tavg / commsize;
 		if (tmin <= tmax) {
-			EmitLog3f(MyRank, SCHEDULER_THREAD, "The minumum/average/maximum temperature across all cores (C) ", tmin, tavg, tmax, PRINT_ALWAYS);
+			EmitLog3f(MyRank, SCHEDULER_THREAD, "The minimum/average/maximum temperature across all cores (C) ", tmin, tavg, tmax, PRINT_ALWAYS);
 		} else {
 			EmitLog(MyRank, SCHEDULER_THREAD, "No valid temperature monitoring interface on this platform.", -1, PRINT_ALWAYS);
 		}
