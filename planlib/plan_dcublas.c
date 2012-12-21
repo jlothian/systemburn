@@ -88,39 +88,41 @@ int   initDCUBLASPlan(void *plan) {
 	DCUBLASdata *d = NULL;
 	p = (Plan *)plan;
 
-#ifdef HAVE_PAPI
+    #ifdef HAVE_PAPI
         int temp_event, i;
         int PAPI_Events [NUM_PAPI_EVENTS] = PAPI_COUNTERS;
         char* PAPI_units [NUM_PAPI_EVENTS] = PAPI_UNITS;
-#endif //HAVE_PAPI
+    #endif //HAVE_PAPI
 
 	if (p) {
 		d = (DCUBLASdata*)p->vptr;
 		p->exec_count = 0;
-		perftimer_init(&p->timers, NUM_TIMERS);
+                if(DO_PERF){
+		    perftimer_init(&p->timers, NUM_TIMERS);
 
-#ifdef HAVE_PAPI
-                /* Initialize plan's PAPI data */
-                p->PAPI_EventSet = PAPI_NULL;
-                p->PAPI_Num_Events = 0;
+                #ifdef HAVE_PAPI
+                    /* Initialize plan's PAPI data */
+                    p->PAPI_EventSet = PAPI_NULL;
+                    p->PAPI_Num_Events = 0;
 
-                TEST_PAPI(PAPI_create_eventset(&p->PAPI_EventSet), PAPI_OK, MyRank, 9999, PRINT_SOME);
+                    TEST_PAPI(PAPI_create_eventset(&p->PAPI_EventSet), PAPI_OK, MyRank, 9999, PRINT_SOME);
                 
-                //Add the desired events to the Event Set; ensure the dsired counters
-                //  are on the system then add, ignore otherwise
-                for(i=0; i<TOTAL_PAPI_EVENTS && i<NUM_PAPI_EVENTS; i++){
-                    temp_event = PAPI_Events[i];
-                    if(PAPI_query_event(temp_event) == PAPI_OK){
-                        p->PAPI_Num_Events++;
-                        TEST_PAPI(PAPI_add_event(p->PAPI_EventSet, temp_event), PAPI_OK, MyRank, 9999, PRINT_SOME);
+                    //Add the desired events to the Event Set; ensure the dsired counters
+                    //  are on the system then add, ignore otherwise
+                    for(i=0; i<TOTAL_PAPI_EVENTS && i<NUM_PAPI_EVENTS; i++){
+                        temp_event = PAPI_Events[i];
+                        if(PAPI_query_event(temp_event) == PAPI_OK){
+                            p->PAPI_Num_Events++;
+                            TEST_PAPI(PAPI_add_event(p->PAPI_EventSet, temp_event), PAPI_OK, MyRank, 9999, PRINT_SOME);
+                        }
                     }
-                }
 
-                PAPIRes_init(p->PAPI_Results, p->PAPI_Times);
-                PAPI_set_units(p->name, PAPI_units, NUM_PAPI_EVENTS);
+                    PAPIRes_init(p->PAPI_Results, p->PAPI_Times);
+                    PAPI_set_units(p->name, PAPI_units, NUM_PAPI_EVENTS);
         
-                TEST_PAPI(PAPI_start(p->PAPI_EventSet), PAPI_OK, MyRank, 9999, PRINT_SOME);
-#endif //HAVE_PAPI
+                    TEST_PAPI(PAPI_start(p->PAPI_EventSet), PAPI_OK, MyRank, 9999, PRINT_SOME);
+                #endif //HAVE_PAPI
+                } //DO_PERF
 	}
 	if(d) {
 		CUDA_CALL( cudaSetDevice(d->device) );
@@ -174,9 +176,11 @@ void * killDCUBLASPlan(void *plan) {
 	d = (DCUBLASdata*)p->vptr;
         int retval;
 
-#ifdef HAVE_PAPI
-        TEST_PAPI(PAPI_stop(p->PAPI_EventSet, NULL), PAPI_OK, MyRank, 9999, PRINT_SOME);
-#endif //HAVE_PAPI
+        if(DO_PERF){
+        #ifdef HAVE_PAPI
+            TEST_PAPI(PAPI_stop(p->PAPI_EventSet, NULL), PAPI_OK, MyRank, 9999, PRINT_SOME);
+        #endif //HAVE_PAPI
+        } //DO_PERF
 
 	CUDA_CALL( cudaThreadSynchronize() );
 	// if(d->DC) CUDA_CALL( cudaFree((void*)(d->DC)) );
@@ -201,10 +205,10 @@ void * killDCUBLASPlan(void *plan) {
  * \sa killDCUBLASPlan
  */
 int execDCUBLASPlan(void *plan) {
-#ifdef HAVE_PAPI
+    #ifdef HAVE_PAPI
         int k;
         long long start, end;
-#endif //HAVE_PAPI
+    #endif //HAVE_PAPI
 
         /* local vars */
 	int M, K, N, lda, ldb, ldc,i;
@@ -227,31 +231,36 @@ int execDCUBLASPlan(void *plan) {
 	// try uncommenting:
 	// CUDA_CALL( cudaMemcpyAsync( (d->DA), (d->DB), (d->arraybytes), cudaMemcpyDeviceToDevice, 0) );
 
-#ifdef HAVE_PAPI
-        /* Start PAPI counters and time */
-        TEST_PAPI(PAPI_reset(p->PAPI_EventSet), PAPI_OK, MyRank, 9999, PRINT_SOME);
-        start = PAPI_get_real_usec();
-#endif //HAVE_PAPI
+        if(DO_PERF){
+        #ifdef HAVE_PAPI
+            /* Start PAPI counters and time */
+            TEST_PAPI(PAPI_reset(p->PAPI_EventSet), PAPI_OK, MyRank, 9999, PRINT_SOME);
+            start = PAPI_get_real_usec();
+        #endif //HAVE_PAPI
 
-	ORB_read(t1);
+	    ORB_read(t1);
+        } //DO_PERF
 	for (i=0; i<(d->nLoopCount); i++)
 		// original:
 		// cublasDgemm('N', 'T', M, N, K, alpha, DA, lda, DB, ldb, beta, DC, ldc);
 		// alternate:
 		cublasDgemm('N', 'N', M, N, K, alpha, DA, lda, DB, ldb, beta, DC, ldc);
-	ORB_read(t2);
         }
-#ifdef HAVE_PAPI
-        end = PAPI_get_real_usec(); //PAPI time
 
-        /* Collect PAPI counters and store time elapsed */
-        TEST_PAPI(PAPI_accum(p->PAPI_EventSet, p->PAPI_Results), PAPI_OK, MyRank, 9999, PRINT_SOME);
-        for(k=0; k<p->PAPI_Num_Events && k<TOTAL_PAPI_EVENTS; k++){
-            p->PAPI_Times[k] += (end - start);
-        }
-#endif //HAVE_PAPI
+        if(DO_PERF){
+	    ORB_read(t2);
+        #ifdef HAVE_PAPI
+            end = PAPI_get_real_usec(); //PAPI time
 
-	perftimer_accumulate(&p->timers, TIMER0, ORB_cycles_a(t2, t1));
+            /* Collect PAPI counters and store time elapsed */
+            TEST_PAPI(PAPI_accum(p->PAPI_EventSet, p->PAPI_Results), PAPI_OK, MyRank, 9999, PRINT_SOME);
+            for(k=0; k<p->PAPI_Num_Events && k<TOTAL_PAPI_EVENTS; k++){
+                p->PAPI_Times[k] += (end - start);
+            }
+        #endif //HAVE_PAPI
+
+	    perftimer_accumulate(&p->timers, TIMER0, ORB_cycles_a(t2, t1));
+        } //DO_PERF
 
 	// DeviceToHost is async wrt the device kernels
 	// try uncommenting:
@@ -295,9 +304,9 @@ int perfDCUBLASPlan (void *plan) {
 		opcounts[TIMER2] = 0;
 		
 		perf_table_update(&p->timers, opcounts, p->name);
-#ifdef HAVE_PAPI
+            #ifdef HAVE_PAPI
 		PAPI_table_update(p->name, p->PAPI_Results, p->PAPI_Times, p->PAPI_Num_Events);
-#endif //HAVE_PAPI
+            #endif //HAVE_PAPI
 		
 		double flops  = ((double)opcounts[TIMER0]/perftimer_gettime(&p->timers, TIMER0))/1e6;
 		EmitLogfs(MyRank, 9999, "DCUBLAS plan performance:", flops, "MFLOPS", PRINT_SOME);

@@ -126,9 +126,11 @@ void * killYOUR_NAMEPlan(void *plan) { // <- Replace YOUR_NAME with the name of 
 	Plan *p; // <- Plan type. Do not change.
 	p = (Plan *)plan; // <- Setting the Plan pointer. Do not change.
 
+    if(DO_PERF){
     #ifdef HAVE_PAPI
         TEST_PAPI(PAPI_stop(p->PAPI_EventSet, NULL), PAPI_OK, MyRank, 9999, PRINT_SOME);
     #endif //HAVE_PAPI
+    }
 
 	free((void*)(p->vptr)); // <- Freeing the used void pointer member of Plan. Do not change.
 	free((void*)(plan)); // <- Freeing the used Plan pointer. Do not change.

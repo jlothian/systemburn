@@ -50,6 +50,7 @@ TemperatureRange local_temp;
 int comm_flag;
 int verbose_flag;
 int plancheck_flag;
+int planperf_flag = 1;
 int num_workers;
 int thermal_panic;
 int thermal_relaxation_time;
@@ -155,7 +156,9 @@ int main(int argc, char** argv, char **envp) {
     errorFlags = initErrorFlags();
     initWorkerFlags();
     
-    performance_init();
+    if(DO_PERF){
+        performance_init();
+    } //DO_PERF
 
     if (MyRank == ROOT) {
         EmitLog(MyRank, SCHEDULER_THREAD, "Initialization complete. Beginning run.", -1, PRINT_ALWAYS);
@@ -246,27 +249,25 @@ int main(int argc, char** argv, char **envp) {
     }
     
     sleep(thermal_relaxation_time);
-    sleep(60);
     
-    perf_table_print(LOCAL, PRINT_OFTEN);
-    perf_table_reduce();
-    
-    perf_table_maxreduce();
-    perf_table_minreduce();
-    
-    if (MyRank == ROOT) {
-        perf_table_print(GLOBAL, PRINT_ALWAYS);
-    }
+    if(DO_PERF){
+        sleep(30);
+        
+        perf_table_print(LOCAL, PRINT_OFTEN);
+        perf_table_reduce();
+        
+        perf_table_maxreduce();
+        perf_table_minreduce();
+        
+        if (MyRank == ROOT) {
+            perf_table_print(GLOBAL, PRINT_ALWAYS);
+        }
+    } //DO_PERF
     
     if (MyRank == ROOT) {
         EmitLog(MyRank, SCHEDULER_THREAD, "Run Completed. Exiting.", -1, PRINT_ALWAYS);
     }
     
-#ifdef HAVE_PAPI
-    PAPI_shutdown();
-#endif //HAVE_PAPI
-
     comm_finalize();
     exit(0);
 }
-

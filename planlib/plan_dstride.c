@@ -101,39 +101,41 @@ int    initDStridePlan(void *plan) {
 	DStridedata *d = NULL;
 	p = (Plan *)plan;
 
-#ifdef HAVE_PAPI
+    #ifdef HAVE_PAPI
         int temp_event, i;
         int PAPI_Events [NUM_PAPI_EVENTS] = PAPI_COUNTERS;
         char* PAPI_units [NUM_PAPI_EVENTS] = PAPI_UNITS;
-#endif //HAVE_PAPI
+    #endif //HAVE_PAPI
 
 	if (p) {
 		d = (DStridedata*)p->vptr;
 		p->exec_count = 0;
-		perftimer_init(&p->timers, NUM_TIMERS);
+                if(DO_PERF){
+		    perftimer_init(&p->timers, NUM_TIMERS);
 
-#ifdef HAVE_PAPI
-                /* Initialize plan's PAPI data */
-                p->PAPI_EventSet = PAPI_NULL;
-                p->PAPI_Num_Events = 0;
+                #ifdef HAVE_PAPI
+                    /* Initialize plan's PAPI data */
+                    p->PAPI_EventSet = PAPI_NULL;
+                    p->PAPI_Num_Events = 0;
 
-                TEST_PAPI(PAPI_create_eventset(&p->PAPI_EventSet), PAPI_OK, MyRank, 9999, PRINT_SOME);
+                    TEST_PAPI(PAPI_create_eventset(&p->PAPI_EventSet), PAPI_OK, MyRank, 9999, PRINT_SOME);
                 
-                //Add the desired events to the Event Set; ensure the dsired counters
-                //  are on the system then add, ignore otherwise
-                for(i=0; i<TOTAL_PAPI_EVENTS && i<NUM_PAPI_EVENTS; i++){
-                    temp_event = PAPI_Events[i];
-                    if(PAPI_query_event(temp_event) == PAPI_OK){
-                        p->PAPI_Num_Events++;
-                        TEST_PAPI(PAPI_add_event(p->PAPI_EventSet, temp_event), PAPI_OK, MyRank, 9999, PRINT_SOME);
+                    //Add the desired events to the Event Set; ensure the dsired counters
+                    //  are on the system then add, ignore otherwise
+                    for(i=0; i<TOTAL_PAPI_EVENTS && i<NUM_PAPI_EVENTS; i++){
+                        temp_event = PAPI_Events[i];
+                        if(PAPI_query_event(temp_event) == PAPI_OK){
+                            p->PAPI_Num_Events++;
+                            TEST_PAPI(PAPI_add_event(p->PAPI_EventSet, temp_event), PAPI_OK, MyRank, 9999, PRINT_SOME);
+                        }
                     }
-                }
 
-                PAPIRes_init(p->PAPI_Results, p->PAPI_Times);
-                PAPI_set_units(p->name, PAPI_units, NUM_PAPI_EVENTS);
+                    PAPIRes_init(p->PAPI_Results, p->PAPI_Times);
+                    PAPI_set_units(p->name, PAPI_units, NUM_PAPI_EVENTS);
         
-                TEST_PAPI(PAPI_start(p->PAPI_EventSet), PAPI_OK, MyRank, 9999, PRINT_SOME);
-#endif //HAVE_PAPI
+                    TEST_PAPI(PAPI_start(p->PAPI_EventSet), PAPI_OK, MyRank, 9999, PRINT_SOME);
+                #endif //HAVE_PAPI
+                } //DO_PERF
 	}
 	if (d) {
 		M = d->M;
@@ -164,9 +166,11 @@ void * killDStridePlan(void *plan) {
 	p = (Plan *)plan;
 	d = (DStridedata*)p->vptr;
 
-#ifdef HAVE_PAPI
-        TEST_PAPI(PAPI_stop(p->PAPI_EventSet, NULL), PAPI_OK, MyRank, 9999, PRINT_SOME);
-#endif //HAVE_PAPI
+        if(DO_PERF){
+        #ifdef HAVE_PAPI
+            TEST_PAPI(PAPI_stop(p->PAPI_EventSet, NULL), PAPI_OK, MyRank, 9999, PRINT_SOME);
+        #endif //HAVE_PAPI
+        } //DO_PERF
 
 	if(d->one)   free(d->one);
 	if(d->two)   free(d->two);
@@ -187,10 +191,10 @@ void * killDStridePlan(void *plan) {
  * \sa killDStridePlan
  */
 int execDStridePlan(void *plan) {
-#ifdef HAVE_PAPI
+    #ifdef HAVE_PAPI
         int j;
         long long start, end;
-#endif //HAVE_PAPI
+    #endif //HAVE_PAPI
 
 	Plan *p;
 	DStridedata* d;
@@ -206,13 +210,15 @@ int execDStridePlan(void *plan) {
 	Set(d->one,d->two,d->M);
 	Fill(d->three);
 
-#ifdef HAVE_PAPI
-        /* Start PAPI counters and time */
-        TEST_PAPI(PAPI_reset(p->PAPI_EventSet), PAPI_OK, MyRank, 9999, PRINT_SOME);
-        start = PAPI_get_real_usec();
-#endif //HAVE_PAPI
+        if(DO_PERF){
+        #ifdef HAVE_PAPI
+            /* Start PAPI counters and time */
+            TEST_PAPI(PAPI_reset(p->PAPI_EventSet), PAPI_OK, MyRank, 9999, PRINT_SOME);
+            start = PAPI_get_real_usec();
+        #endif //HAVE_PAPI
 
-	ORB_read(t1);
+	    ORB_read(t1);
+        } //DO_PERF
 	for(k=0;k<REPEAT;k++) {
 		for(r=0;r<10;r++) {
 			for(i=0;i<d->M;i+=Inc[r]) {
@@ -222,20 +228,23 @@ int execDStridePlan(void *plan) {
 		}
 		sum++;
 	}
-	ORB_read(t2);
-#ifdef HAVE_PAPI
-        end = PAPI_get_real_usec(); //PAPI time
 
-        /* Collect PAPI counters and store time elapsed */
-        TEST_PAPI(PAPI_accum(p->PAPI_EventSet, p->PAPI_Results), PAPI_OK, MyRank, 9999, PRINT_SOME);
-        for(j=0; j<p->PAPI_Num_Events && j<TOTAL_PAPI_EVENTS; j++){
-            p->PAPI_Times[j] += (end - start);
-        }
-#endif //HAVE_PAPI
+        if(DO_PERF){
+	    ORB_read(t2);
+        #ifdef HAVE_PAPI
+            end = PAPI_get_real_usec(); //PAPI time
 
-	perftimer_accumulate(&p->timers, TIMER0, ORB_cycles_a(t2, t1));
-	perftimer_accumulate(&p->timers, TIMER1, ORB_cycles_a(t2, t1));
-	if (CHECK_CALC) {
+            /* Collect PAPI counters and store time elapsed */
+            TEST_PAPI(PAPI_accum(p->PAPI_EventSet, p->PAPI_Results), PAPI_OK, MyRank, 9999, PRINT_SOME);
+            for(j=0; j<p->PAPI_Num_Events && j<TOTAL_PAPI_EVENTS; j++){
+                p->PAPI_Times[j] += (end - start);
+            }
+        #endif //HAVE_PAPI
+
+	    perftimer_accumulate(&p->timers, TIMER0, ORB_cycles_a(t2, t1));
+	    perftimer_accumulate(&p->timers, TIMER1, ORB_cycles_a(t2, t1));
+	} //DO_PERF
+        if (CHECK_CALC) {
 		ret = (sum == (REPEAT * (1.0 + 10.0 * d->three[0]))) ? ERR_CLEAN : make_error(CALC,generic_err);
 	}
 	return ret;
@@ -270,9 +279,9 @@ int perfDStridePlan (void *plan) {
 		opcounts[TIMER2] = 0;
 		
 		perf_table_update(&p->timers, opcounts, p->name);
-#ifdef HAVE_PAPI
+            #ifdef HAVE_PAPI
 		PAPI_table_update(p->name, p->PAPI_Results, p->PAPI_Times, p->PAPI_Num_Events);
-#endif //HAVE_PAPI
+            #endif //HAVE_PAPI
 		
 		double flops = ((double)opcounts[TIMER0]/perftimer_gettime(&p->timers, TIMER0))/1e6;
 		double mbps  = ((double)opcounts[TIMER1]/perftimer_gettime(&p->timers, TIMER1))/1e6;
