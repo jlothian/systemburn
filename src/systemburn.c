@@ -156,7 +156,7 @@ int main(int argc, char** argv, char **envp) {
 	
 	if(DO_PERF){
                 performance_init();
-        }
+        } //DO_PERF
 
 	if (MyRank == ROOT) {
 		EmitLog(MyRank, SCHEDULER_THREAD, "Initialization complete. Beginning run.", -1, PRINT_ALWAYS);
@@ -258,7 +258,7 @@ int main(int argc, char** argv, char **envp) {
                 if (MyRank == ROOT) {
                         perf_table_print(GLOBAL, PRINT_ALWAYS);
                 }
-        }
+    } //DO_PERF
 	
 	if (MyRank == ROOT) {
 		EmitLog(MyRank, SCHEDULER_THREAD, "Run Completed. Exiting.", -1, PRINT_ALWAYS);
@@ -267,4 +267,3 @@ int main(int argc, char** argv, char **envp) {
 	comm_finalize();
 	exit(0);
 }
-

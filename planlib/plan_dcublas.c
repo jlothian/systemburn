@@ -176,9 +176,11 @@ void * killDCUBLASPlan(void *plan) {
 	d = (DCUBLASdata*)p->vptr;
         int retval;
 
+        if(DO_PERF){
 #ifdef HAVE_PAPI
         TEST_PAPI(PAPI_stop(p->PAPI_EventSet, NULL), PAPI_OK, MyRank, 9999, PRINT_SOME);
 #endif //HAVE_PAPI
+        } //DO_PERF
 
 	CUDA_CALL( cudaThreadSynchronize() );
 	// if(d->DC) CUDA_CALL( cudaFree((void*)(d->DC)) );

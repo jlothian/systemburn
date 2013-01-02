@@ -233,6 +233,7 @@ int execCommPlan(void *plan) {
 		sync = d->ThisRankID;
                 if (DO_PERF){
                         ORB_read(t2);
+
 #ifdef HAVE_PAPI
                         end = PAPI_get_real_usec(); //PAPI time
 
@@ -256,7 +257,6 @@ int execCommPlan(void *plan) {
 		p->exec_count++;
 
                 if (DO_PERF){
-		
 #ifdef HAVE_PAPI
                         /* Start PAPI counters and time */
                         TEST_PAPI(PAPI_reset(p->PAPI_EventSet), PAPI_OK, MyRank, 9999, PRINT_SOME);
@@ -272,6 +272,7 @@ int execCommPlan(void *plan) {
 		}
                 if (DO_PERF){
                         ORB_read(t2);
+
 #ifdef HAVE_PAPI
                 end = PAPI_get_real_usec(); //PAPI time
 
@@ -345,9 +346,11 @@ void * killCommPlan(void *plan) {
 	p = (Plan *)plan;
 	d = (COMMdata*)p->vptr;
 
+        if(DO_PERF){
 #ifdef HAVE_PAPI
         TEST_PAPI(PAPI_stop(p->PAPI_EventSet, NULL), PAPI_OK, MyRank, 9999, PRINT_SOME);
 #endif //HAVE_PAPI
+        } //DO_PERF
 
 #ifdef HAVE_SHMEM
 	if (d->sendbufptr)shfree((void*)(d->sendbufptr));

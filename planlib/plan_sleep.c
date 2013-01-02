@@ -80,6 +80,7 @@ int  initSleepPlan(void *plan) {
 	if(p) {
 		ret = ERR_CLEAN;
 		p->exec_count = 0;
+
                 if(DO_PERF){
                         perftimer_init(&p->timers, NUM_TIMERS);
 #ifdef HAVE_PAPI
@@ -129,7 +130,6 @@ int execSleepPlan(void *plan) {
 	Plan *p = (Plan *)plan;
 	p->exec_count++;
 	
-
         if(DO_PERF){
 #ifdef HAVE_PAPI
                 /* Start PAPI counters and time */
@@ -137,7 +137,7 @@ int execSleepPlan(void *plan) {
                 start = PAPI_get_real_usec();
 #endif //HAVE_PAPI
                 ORB_read(t1);
-        }
+        } //DO_PERF
 
 	sleep(*((int*)p->vptr));
 
@@ -172,9 +172,11 @@ void * killSleepPlan(void *plan) {
 	Plan *p;
 	p = (Plan *)plan;
 
+        if(DO_PERF){
     #ifdef HAVE_PAPI
         TEST_PAPI(PAPI_stop(p->PAPI_EventSet, NULL), PAPI_OK, MyRank, 9999, PRINT_SOME);
     #endif //HAVE_PAPI
+        } //DO_PERF
 
 	free((void*)(p->vptr));
 	free((void*)(plan));

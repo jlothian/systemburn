@@ -95,9 +95,10 @@ void * makeGUPSPlan(data *m) {
 */
 int  initGUPSPlan(void *plan) {
 	int ret = make_error(ALLOC,generic_err);
+        int i;
 
     #ifdef HAVE_PAPI
-        int temp_event, i;
+        int temp_event, k;
         int PAPI_Events [NUM_PAPI_EVENTS] = PAPI_COUNTERS;
         char* PAPI_units [NUM_PAPI_EVENTS] = PAPI_UNITS;
     #endif //HAVE_PAPI
@@ -122,8 +123,8 @@ int  initGUPSPlan(void *plan) {
                         
                         //Add the desired events to the Event Set; ensure the dsired counters
                         //  are on the system then add, ignore otherwise
-                        for(i=0; i<TOTAL_PAPI_EVENTS && i<NUM_PAPI_EVENTS; i++){
-                            temp_event = PAPI_Events[i];
+                    for(k=0; k<TOTAL_PAPI_EVENTS && k<NUM_PAPI_EVENTS; k++){
+                        temp_event = PAPI_Events[k];
                             if(PAPI_query_event(temp_event) == PAPI_OK){
                                 p->PAPI_Num_Events++;
                                 //TEST_PAPI(PAPI_add_event, PAPI_OK, MyRank, 9999, PRINT_SOME, p->PAPI_EventSet, temp_event);
@@ -191,10 +192,11 @@ void * killGUPSPlan(void *plan) {
 	if(d->sub) free((void*)(d->sub));
 	if(d->random) free((void*)(d->random));
 
+        if(DO_PERF){
     #ifdef HAVE_PAPI
-        //TEST_PAPI(PAPI_stop, PAPI_OK, MyRank, 9999, PRINT_SOME, p->PAPI_EventSet, NULL);
         TEST_PAPI(PAPI_stop(p->PAPI_EventSet, NULL), PAPI_OK, MyRank, 9999, PRINT_SOME);
     #endif //HAVE_PAPI
+        } //DO_PERF
 
 	free((void*)(d));
 	free((void*)(p));
@@ -247,12 +249,12 @@ int execGUPSPlan(void *plan) {
         if(DO_PERF){
 #ifdef HAVE_PAPI
                 /* Start PAPI counters and time */
-                //TEST_PAPI(PAPI_reset, PAPI_OK, MyRank, 9999, PRINT_SOME, p->PAPI_EventSet);
                 TEST_PAPI(PAPI_reset(p->PAPI_EventSet), PAPI_OK, MyRank, 9999, PRINT_SOME);
                 start = PAPI_get_real_usec();
 #endif //HAVE_PAPI
                 ORB_read(t1);
         } //DO_PERF
+
 	/* perform updates to main table */
 	for (i = 0; i < nupdates/RSIZE; i++) {
 		for (j = 0; j < RSIZE; j++) {
@@ -283,7 +285,8 @@ int execGUPSPlan(void *plan) {
                 
                 if(DO_PERF){
                         ORB_read(t1);
-                }
+                } //DO_PERF
+
 		for (i = 0; i < nupdates; i++) {
 			temp = (temp << 1) ^ (((int64_t) temp < 0) ? POLY : 0);
 			tbl[temp & (tblsize-1)] ^= sub[temp >> (64-lsubsize)];
@@ -305,7 +308,7 @@ int execGUPSPlan(void *plan) {
                 if(DO_PERF){
                         ORB_read(t2);
                         perftimer_accumulate(&p->timers, TIMER1, ORB_cycles_a(t2, t1));
-                }
+                } //DO_PERF
 
 		if(errflag==1)
 			ret = make_error(CALC,generic_err);
@@ -428,5 +431,3 @@ uint64_t GUPS_startRNG(int64_t n) {
 
 	return ran;
 }
-
-

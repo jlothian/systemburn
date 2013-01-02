@@ -166,9 +166,11 @@ void * killDStridePlan(void *plan) {
 	p = (Plan *)plan;
 	d = (DStridedata*)p->vptr;
 
+        if(DO_PERF){
 #ifdef HAVE_PAPI
         TEST_PAPI(PAPI_stop(p->PAPI_EventSet, NULL), PAPI_OK, MyRank, 9999, PRINT_SOME);
 #endif //HAVE_PAPI
+        } //DO_PERF
 
 	if(d->one)   free(d->one);
 	if(d->two)   free(d->two);
@@ -215,8 +217,7 @@ int execDStridePlan(void *plan) {
                 start = PAPI_get_real_usec();
 #endif //HAVE_PAPI
                 ORB_read(t1);
-        }
-
+        } //DO_PERF
 	for(k=0;k<REPEAT;k++) {
 		for(r=0;r<10;r++) {
 			for(i=0;i<d->M;i+=Inc[r]) {

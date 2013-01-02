@@ -146,7 +146,7 @@ void * WorkerThread(void *p) {
                                 if (perf_flag != ERR_CLEAN) {
                                         EmitLog(MyRank, MyHandle->Num, "Performance recording error flag triggered, error number:", perf_flag, PRINT_SOME);
                                 }
-                        }
+                        } //DO_PERF
 			EmitLog(MyRank, MyHandle->Num, "Thread exiting", -1, PRINT_SOME);
                         fprintf(stderr,"Killing a plan!\n");
 			WorkerPlan = killPlan(WorkerPlan);              /* clean up old plan       */
@@ -161,6 +161,7 @@ void * WorkerThread(void *p) {
                                                 if (perf_flag != ERR_CLEAN) {
                                                         EmitLog(MyRank, MyHandle->Num, "Performance recording error flag triggered, error number:", perf_flag, PRINT_SOME);
                                                 }
+                                        } //DO_PERF
                                         }
 				}
 #ifdef LINUX_PLACEMENT

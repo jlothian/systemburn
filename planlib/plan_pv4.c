@@ -90,6 +90,7 @@ int    initPV4Plan(void *plan) {
 	if (p) {
 		d = (PV4data*)p->vptr;
 		p->exec_count = 0;
+
                 if(DO_PERF){
                         perftimer_init(&p->timers, NUM_TIMERS);
 
@@ -164,9 +165,11 @@ void * killPV4Plan(void *plan) {
 	assert(d);
 
 	//EmitLog(MyRank,1,"Freeing   ",sizeof(double)*4*d->M,0);
+        if(DO_PERF){
     #ifdef HAVE_PAPI
         TEST_PAPI(PAPI_stop(p->PAPI_EventSet, NULL), PAPI_OK, MyRank, 9999, PRINT_SOME);
     #endif //HAVE_PAPI
+        }
 
 
 	if(d->one)   free(d->one);
@@ -221,7 +224,7 @@ int execPV4Plan(void *plan) {
                 start = PAPI_get_real_usec();
 #endif //HAVE_PAPI
                 ORB_read(t1);
-        }
+        } //DO_PERF
 
 	for(j=0; j<10000; j++) {
 		for(i=0; i<M; i+=1) {

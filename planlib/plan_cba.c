@@ -214,6 +214,7 @@ int execCBAPlan(void *plan) {
 		cnt_bit_arr (ci->work, ci->nrows, ci->ncols, ci->out, niters);
                 if (DO_PERF){
                         ORB_read(t2);
+
 #ifdef HAVE_PAPI
                         end = PAPI_get_real_usec(); //PAPI time
 
@@ -284,9 +285,11 @@ void * killCBAPlan(void *plan) {
 	p = (Plan *)plan;
 	ci = (CBA_data *)p->vptr;
 
+        if(DO_PERF){
 #ifdef HAVE_PAPI
         TEST_PAPI(PAPI_stop(p->PAPI_EventSet, NULL), PAPI_OK, MyRank, 9999, PRINT_SOME);
 #endif //HAVE_PAPI
+        } //DO_PERF
 
 	free((void*)(ci->work));
 	free((void*)(p->vptr)); 

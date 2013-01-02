@@ -160,9 +160,11 @@ void * killFFT2Plan(void *plan) {
 	assert(d);
 	pthread_rwlock_wrlock(&FFTW_Lock);
 
+        if(DO_PERF){
     #ifdef HAVE_PAPI
         TEST_PAPI(PAPI_stop(p->PAPI_EventSet, NULL), PAPI_OK, MyRank, 9999, PRINT_SOME);
     #endif //HAVE_PAPI
+        } //DO_PERF
 
 	if(d->in_original) fftw_free(d->in_original);
 	if(d->out)         fftw_free(d->out);
@@ -241,7 +243,7 @@ int execFFT2Plan(void *plan) {
                 } //DO_PERF
 
 		fftw_execute(d->backward);
-
+		
                 if(DO_PERF){
                         ORB_read(t2);
 #ifdef HAVE_PAPI

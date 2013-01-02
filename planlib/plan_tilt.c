@@ -142,9 +142,9 @@ int  initTiltPlan(void *plan) {
 	if (p) {
 		ti = (TILT_data *)p->vptr;
 		p->exec_count = 0;
+
                 if(DO_PERF){
                         perftimer_init(&p->timers, NUM_TIMERS);
-
 #ifdef HAVE_PAPI
                         /* Initialize plan's PAPI data */
                         p->PAPI_EventSet = PAPI_NULL;
@@ -215,7 +215,7 @@ int execTiltPlan(void *plan) {
                 start = PAPI_get_real_usec();
 #endif //HAVE_PAPI
                 ORB_read(t1);
-        }
+        } //DO_PERF
 
 	for (i = 0; i < ti->niter; i++)
 		tilt(ti->arr);
@@ -233,7 +233,7 @@ int execTiltPlan(void *plan) {
                 }
 #endif //HAVE_PAPI
                 perftimer_accumulate(&p->timers, TIMER0, ORB_cycles_a(t2, t1));
-        }
+	} //DO_PERF
 
 	return ERR_CLEAN; 
 }
@@ -290,9 +290,11 @@ void * killTiltPlan(void *plan) {
 	TILT_data *ti;
 	p = (Plan *)plan; 
 
+        if(DO_PERF){
     #ifdef HAVE_PAPI
         TEST_PAPI(PAPI_stop(p->PAPI_EventSet, NULL), PAPI_OK, MyRank, 9999, PRINT_SOME);
     #endif //HAVE_PAPI
+        } //DO_PERF
 
 	ti = (TILT_data *)p->vptr;
 	free((void*)(ti->arr));

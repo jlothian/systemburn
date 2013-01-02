@@ -98,6 +98,7 @@ int   initSCUBLASPlan(void *plan) {
 	if (p) {
 		d = (SCUBLASdata*)p->vptr;
 		p->exec_count = 0;
+
                 if(DO_PERF){
                         perftimer_init(&p->timers, NUM_TIMERS);
 
@@ -176,9 +177,11 @@ void * killSCUBLASPlan(void *plan) {
 	p = (Plan *)plan;
 	d = (SCUBLASdata*)p->vptr;
 
+        if(DO_PERF){
     #ifdef HAVE_PAPI
         TEST_PAPI(PAPI_stop(p->PAPI_EventSet, NULL), PAPI_OK, MyRank, 9999, PRINT_SOME);
     #endif //HAVE_PAPI
+        } //DO_PERF
 
 	CUDA_CALL( cudaThreadSynchronize() );
 	if(d->DC) CUDA_CALL( cudaFree((void*)(d->DC)) );
@@ -232,7 +235,7 @@ int execSCUBLASPlan(void *plan) {
                 start = PAPI_get_real_usec();
 #endif //HAVE_PAPI
                 ORB_read(t1);
-        }
+        } //DO_PERF
 
 	for (i=0; i<(d->nLoopCount); i++)
 		cublasSgemm('N', 'T', M, N, K, alpha, DA, lda, DB, ldb, beta, DC, ldc);
@@ -259,7 +262,7 @@ int execSCUBLASPlan(void *plan) {
 		float maxerr=0.0;
                 if(DO_PERF){
                         ORB_read(t1);
-                }
+                } //DO_PERF
 
 		for (i=0; i<((d->M)*(d->M)); i++) {
 			err = (d->HA[i]) - (d->M)*(0.31415926535*0.31415926535);
@@ -270,7 +273,7 @@ int execSCUBLASPlan(void *plan) {
                 if(DO_PERF){
                         ORB_read(t2);
                         perftimer_accumulate(&p->timers, TIMER1, ORB_cycles_a(t2, t1));
-                }
+		} //DO_PERF
 
 		if (maxerr > 1.0e-6) {
 			EmitLogfs(MyRank, 9999, "SCUBLAS GPU check: MaxError:", maxerr, "", 0);

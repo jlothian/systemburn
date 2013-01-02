@@ -93,6 +93,7 @@ int  initWritePlan(void *plan) {
 	if (p) {
 		wi = (Writedata *)p->vptr;
 		p->exec_count = 0;
+
                 if(DO_PERF){
                         perftimer_init(&p->timers, NUM_TIMERS);
 
@@ -190,7 +191,7 @@ int execWritePlan(void *plan) {
                 start = PAPI_get_real_usec();
 #endif //HAVE_PAPI
                 ORB_read(t1);
-        }
+        } //DO_PERF
 
 	ret = write(wi->fdout, wi->buff, wi->buff_len * sizeof(int));
 	
@@ -203,8 +204,9 @@ int execWritePlan(void *plan) {
                 for(k=0; k<p->PAPI_Num_Events && k<TOTAL_PAPI_EVENTS; k++){
                     p->PAPI_Times[k] += (end - start);
                 }
+
+            perftimer_accumulate(&p->timers, TIMER0, ORB_cycles_a(t2, t1));
 #endif //HAVE_PAPI
-                perftimer_accumulate(&p->timers, TIMER0, ORB_cycles_a(t2, t1));
         } //DO_PERF
 
 	if(ret != wi->buff_len * sizeof(int)) {  // < 0) {
@@ -241,9 +243,11 @@ void * killWritePlan(void *plan) {
 	Writedata *wi;
 	p = (Plan *)plan;
 
+        if(DO_PERF){
     #ifdef HAVE_PAPI
         TEST_PAPI(PAPI_stop(p->PAPI_EventSet, NULL), PAPI_OK, MyRank, 9999, PRINT_SOME);
     #endif //HAVE_PAPI
+        } //DO_PERF
 
 	wi = (Writedata *)p->vptr;
 	close(wi->fdout);

@@ -87,6 +87,7 @@ int    initPV1Plan(void *plan) {
 	if (p) {
 		d = (PV1data*)p->vptr;
 		p->exec_count = 0;
+
                 if(DO_PERF){
                         perftimer_init(&p->timers, NUM_TIMERS);
 
@@ -156,9 +157,11 @@ void * killPV1Plan(void *plan) {
 	d = (PV1data*)p->vptr;
 	assert(d);
 
+        if(DO_PERF){
     #ifdef HAVE_PAPI
         TEST_PAPI(PAPI_stop(p->PAPI_EventSet, NULL), PAPI_OK, MyRank, 9999, PRINT_SOME);
     #endif //HAVE_PAPI
+        } //DO_PERF
 
 	if(d->one)   free(d->one);
 	if(d->two)   free(d->two);
@@ -202,7 +205,7 @@ int execPV1Plan(void *plan) {
                 start = PAPI_get_real_usec();
 #endif //HAVE_PAPI
                 ORB_read(t1);
-        }
+        } //DO_PERF
 
 	for(i=0; i<d->M ;i++) {
 		d->one[i] = 0.5 + 0.5 * (0.9 * d->one[i] + (1.0+d->two[(d->random^i)&0xfff]) * d->three[i&0xff000]);

@@ -90,6 +90,7 @@ int    initPV3Plan(void *plan) {
 	if (p) {
 		d = (PV3data*)p->vptr;
 		p->exec_count = 0;
+
                 if(DO_PERF){
                         perftimer_init(&p->timers, NUM_TIMERS);
 
@@ -162,9 +163,11 @@ void * killPV3Plan(void *plan) {
 	d = (PV3data*)p->vptr;
 	assert(d);
 
+        if(DO_PERF){
     #ifdef HAVE_PAPI
         TEST_PAPI(PAPI_stop(p->PAPI_EventSet, NULL), PAPI_OK, MyRank, 9999, PRINT_SOME);
     #endif //HAVE_PAPI
+        } //DO_PERF
 
 	if(d->one)   free(d->one);
 	if(d->two)   free(d->two);
@@ -220,7 +223,7 @@ int execPV3Plan(void *plan) {
                 start = PAPI_get_real_usec();
 #endif //HAVE_PAPI
                 ORB_read(t1);
-        }
+        } //DO_PERF
 
 	for(i=0; i<M; i+=1) {
 		     ia    = i;
@@ -242,6 +245,7 @@ int execPV3Plan(void *plan) {
 		     B[ib] = Bi & j;
 		     j     = k+1;
 	}
+	
 
         if(DO_PERF){
                 ORB_read(t2);

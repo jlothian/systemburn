@@ -198,9 +198,11 @@ void * killDStreamPlan(void *plan) {
 	if(d->four)  free(d->four);
 	if(d->five)  free(d->five);
 
+        if(DO_PERF){
 #ifdef HAVE_PAPI
         TEST_PAPI(PAPI_stop(p->PAPI_EventSet, NULL), PAPI_OK, MyRank, 9999, PRINT_SOME);
 #endif //HAVE_PAPI
+        } //DO_PERF
 
 	free(d);
 	free(p);
@@ -218,10 +220,10 @@ void * killDStreamPlan(void *plan) {
  * \sa killDStreamPlan
  */
 int execDStreamPlan(void *plan) {
-        /* PAPI vars */
+    #ifdef HAVE_PAPI
         int k;
         long long start, end;
-        /* PAPI vars */
+    #endif //HAVE_PAPI
 
 	register int i;
 	int ret = ERR_CLEAN;
@@ -245,7 +247,6 @@ int execDStreamPlan(void *plan) {
         }
 
         if (DO_PERF){
-        
 #ifdef HAVE_PAPI
                 /* Start PAPI counters and time */
                 TEST_PAPI(PAPI_reset(p->PAPI_EventSet), PAPI_OK, MyRank, 9999, PRINT_SOME);
@@ -254,7 +255,7 @@ int execDStreamPlan(void *plan) {
 
                 ORB_read(t1);
         } //DO_PERF
-
+        //
 	//Copy
 	for(i=0; i<d->M ;i++)
 		d->three[i] = d->one[i]; 
@@ -273,6 +274,7 @@ int execDStreamPlan(void *plan) {
 
         if (DO_PERF){
                 ORB_read(t2);
+    
 #ifdef HAVE_PAPI
                 end = PAPI_get_real_usec(); //PAPI time
 
@@ -291,12 +293,12 @@ int execDStreamPlan(void *plan) {
 	if (CHECK_CALC) {
                 if (DO_PERF) {
                         ORB_read(t1);
-                }
+                } //DO_PERF
 		ret = StreamCheck(d);
                 if (DO_PERF){
                         ORB_read(t2);
                         perftimer_accumulate(&p->timers, TIMER2, ORB_cycles_a(t2, t1));
-                }
+                } //DO_PERF
 	}
 	return ret;
 }

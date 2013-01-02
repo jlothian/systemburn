@@ -91,6 +91,7 @@ int   initRDGEMMPlan(void *plan) {
 	if (p) {
 		d = (RDGEMMdata*)p->vptr;
 		p->exec_count = 0;
+
                 if(DO_PERF){
                         perftimer_init(&p->timers, NUM_TIMERS);
 
@@ -156,9 +157,11 @@ void * killRDGEMMPlan(void *plan) {
 	p = (Plan *)plan;
 	d = (RDGEMMdata*)p->vptr;
 
+        if(DO_PERF){
     #ifdef HAVE_PAPI
         TEST_PAPI(PAPI_stop(p->PAPI_EventSet, NULL), PAPI_OK, MyRank, 9999, PRINT_SOME);
     #endif //HAVE_PAPI
+        } //DO_PERF
 
 	if(d->C) free((void*)(d->C));
 	if(d->B) free((void*)(d->B));
@@ -209,7 +212,7 @@ int execRDGEMMPlan(void *plan) {
                 start = PAPI_get_real_usec();
 #endif //HAVE_PAPI
                 ORB_read(t1);
-        }
+        } //DO_PERF
 
 	cblas_dgemm( CblasRowMajor, CblasNoTrans, CblasNoTrans, M, N, K, alpha, A, lda, B, ldb, beta, C, ldc); 
 

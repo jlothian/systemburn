@@ -177,9 +177,11 @@ void * killDGEMMPlan(void *plan) {
 
 //	EmitLog(MyRank,11,"Freeing   ",sizeof(double)*d->M*d->M*3,0);
 
+        if(DO_PERF){
 #ifdef HAVE_PAPI
         TEST_PAPI(PAPI_stop(p->PAPI_EventSet, NULL), PAPI_OK, MyRank, 9999, PRINT_SOME);
 #endif //HAVE_PAPI
+        } //DO_PERF
 
 	if(d->C) free((void*)(d->C));
 	if(d->B) free((void*)(d->B));

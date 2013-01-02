@@ -110,6 +110,7 @@ int    initLStridePlan(void *plan) {
 	if (p) {
 		d = (LStridedata*)p->vptr;
 		p->exec_count = 0;
+                
                 if(DO_PERF){
                         perftimer_init(&p->timers, NUM_TIMERS);
 
@@ -170,9 +171,11 @@ void * killLStridePlan(void *plan) {
 	d = (LStridedata*)p->vptr;
 
 	//EmitLog(MyRank,111,"Freeing   ",sizeof(long int)*(d->M*2+CACHE),0);
+        if(DO_PERF){
     #ifdef HAVE_PAPI
         TEST_PAPI(PAPI_stop(p->PAPI_EventSet, NULL), PAPI_OK, MyRank, 9999, PRINT_SOME);
     #endif //HAVE_PAPI
+        } //DO_PERF
 
 	if(d->one)   free(d->one);
 	if(d->two)   free(d->two);
@@ -219,7 +222,7 @@ int execLStridePlan(void *plan) {
                 start = PAPI_get_real_usec();
 #endif //HAVE_PAPI
                 ORB_read(t1);
-        }
+        } //DO_PERF
 
 	for(k=0;k<REPEAT;k++) {
 		for(r=0;r<10;r++) {

@@ -136,6 +136,7 @@ int  initISORTPlan(void *plan) { // <- Replace ISORT with the name of your modul
 	if (p) {
 		d = (ISORTdata *)p->vptr;
 		p->exec_count = 0;   // Initialize the plan execution count to zero.
+                
                 if(DO_PERF){
                         perftimer_init(&p->timers, NUM_TIMERS); // Initialize all performance timers to zero.
 
@@ -162,6 +163,7 @@ int  initISORTPlan(void *plan) { // <- Replace ISORT with the name of your modul
                         TEST_PAPI(PAPI_start(p->PAPI_EventSet), PAPI_OK, MyRank, 9999, PRINT_SOME);
                 }
 #endif //HAVE_PAPI
+                } //DO_PERF
 	}
 	if (d) {
                 d->numbers = (uint64_t *)malloc(d->array_size*sizeof(uint64_t));
@@ -204,7 +206,7 @@ int execISORTPlan(void *plan) { // <- Replace ISORT with the name of your module
                 start = PAPI_get_real_usec();
 #endif //HAVE_PAPI
                 ORB_read(t1);     // Store the timestamp for the beginning of the execution.
-        }
+        } //DO_PERF
 
         isort_quicksort(d->numbers,0,d->array_size-1);
 	
@@ -226,7 +228,7 @@ int execISORTPlan(void *plan) { // <- Replace ISORT with the name of your module
 	if (CHECK_CALC) {     // Evaluates to true if the '-t' option is passed on the commandline.
                 if(DO_PERF){
                         ORB_read(t1);
-                }
+                } //DO_PERF
 		
 		// ----------------------------------------------------------------
 		// Optional: Check calculations performed in execution above.
@@ -235,6 +237,7 @@ int execISORTPlan(void *plan) { // <- Replace ISORT with the name of your module
 		if(DO_PERF){
                         ORB_read(t2);
                         perftimer_accumulate(&p->timers, TIMER1, ORB_cycles_a(t2, t1));
+                } //DO_PERF
                 }
 	}
 	
@@ -253,9 +256,11 @@ void * killISORTPlan(void *plan) {
         ISORTdata *d;
 	p = (Plan *)plan;
 
+        if(DO_PERF){
     #ifdef HAVE_PAPI
         TEST_PAPI(PAPI_stop(p->PAPI_EventSet, NULL), PAPI_OK, MyRank, 9999, PRINT_SOME);
     #endif //HAVE_PAPI
+        } //DO_PERF
 
         d = (ISORTdata *)(p->vptr);
         if(d->numbers){
