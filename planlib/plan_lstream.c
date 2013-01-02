@@ -266,8 +266,6 @@ int execLStreamPlan(void *plan) {
 	
         if(DO_PERF){
 	ORB_read(t2);
-
-        if(DO_PERF){
 #ifdef HAVE_PAPI
                 end = PAPI_get_real_usec(); //PAPI time
 

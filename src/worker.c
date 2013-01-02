@@ -162,7 +162,6 @@ void * WorkerThread(void *p) {
                                                         EmitLog(MyRank, MyHandle->Num, "Performance recording error flag triggered, error number:", perf_flag, PRINT_SOME);
                                                 }
                                         } //DO_PERF
-                                        }
 				}
 #ifdef LINUX_PLACEMENT
 				numcpucores = sysconf(_SC_NPROCESSORS_ONLN);
