@@ -1,23 +1,23 @@
 /*
-  This file is part of SystemBurn.
+   This file is part of SystemBurn.
 
-  Copyright (C) 2012, UT-Battelle, LLC.
+   Copyright (C) 2012, UT-Battelle, LLC.
 
-  This product includes software produced by UT-Battelle, LLC under Contract No. 
-  DE-AC05-00OR22725 with the Department of Energy. 
+   This product includes software produced by UT-Battelle, LLC under Contract No.
+   DE-AC05-00OR22725 with the Department of Energy.
 
-  This program is free software; you can redistribute it and/or modify
-  it under the terms of the New BSD 3-clause software license (LICENSE). 
-  
-  This program is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the 
-  LICENSE for more details.
+   This program is free software; you can redistribute it and/or modify
+   it under the terms of the New BSD 3-clause software license (LICENSE).
 
-  For more information please contact the SystemBurn developers at: 
-  systemburn-info@googlegroups.com
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+   LICENSE for more details.
 
-*/
+   For more information please contact the SystemBurn developers at:
+   systemburn-info@googlegroups.com
+
+ */
 /**************************************************************************
  * ORBtimer -- The Oak Ridge Benchmarking Timer Library
  *
@@ -88,9 +88,9 @@
 #ifndef HAVE_ORBTIMER
 #    define HAVE_ORBTIMER
 #    ifdef ORBTIMER_LIBRARY
-#        define ORBEXTERN(x,y) x=y
+  #        define ORBEXTERN(x,y) x = y
 #    else
-#        define ORBEXTERN(x,y) extern x
+  #        define ORBEXTERN(x,y) extern x
 #    endif
 
 void ORB_calibrate();
@@ -118,143 +118,143 @@ ORBEXTERN(double ORB_min_lat_sec, 1000000.0);
 #    define ORB_REFFREQ           ( (double)    (ORB_ref_freq))
 
 #    if defined(TIMER_X86_64)
-       /**********************************************************
-        * NOTES:
-        * A hardware cycle counter is preferred if it is 
-        * predictable -- ie. the cost is relatively constant.
-	*
-	* If multiple hardware counters are available, prefer
-	* one located in-core as it will have lower latency and
-	* less variability.
-        *
-        * This module is a compromise for Intel and AMD
-        * processors running in 64 bit mode. Hardware Performance
-	* Counters can have less latency and variability, but they
-	* are available on all systems.
-        * 
-        * RDTSC alone is faster, but without a serializing
-        * instruction, its result can be impacted by
-        * out-of-order execution.  While the documentation
-        * suggests using CPUID to serialize the instruction
-        * stream, the CPUID instruction timing is
-        * enormously variable, and thus unreliable. MFENCE
-        * on the other hand is predictable. Newer Intel
-        * and AMD processors provide a serializing
-        * version, RDTSCP, however, its timing is not
-        * more predictable in its timing than RDTSC, and
-        * since we can estimate and subtract the avg cost
-        * of timing, the constant cost difference between
-        * RDTSC and RDTSCP will not impact our accuracy.
-	*
-	* ORB_t		-- CPU Cycles
-	* ORB_tick_t	-- CPU Cycles
-	* ORB_REFFREQ	-- CPU core Frequency
-        *********************************************************/
-#       ifndef HAVE_ORBTIMER_NATIVE
-#           define HAVE_ORBTIMER_NATIVE "X86_64"
+/**********************************************************
+ * NOTES:
+ * A hardware cycle counter is preferred if it is
+ * predictable -- ie. the cost is relatively constant.
+ *
+ * If multiple hardware counters are available, prefer
+ * one located in-core as it will have lower latency and
+ * less variability.
+ *
+ * This module is a compromise for Intel and AMD
+ * processors running in 64 bit mode. Hardware Performance
+ * Counters can have less latency and variability, but they
+ * are available on all systems.
+ *
+ * RDTSC alone is faster, but without a serializing
+ * instruction, its result can be impacted by
+ * out-of-order execution.  While the documentation
+ * suggests using CPUID to serialize the instruction
+ * stream, the CPUID instruction timing is
+ * enormously variable, and thus unreliable. MFENCE
+ * on the other hand is predictable. Newer Intel
+ * and AMD processors provide a serializing
+ * version, RDTSCP, however, its timing is not
+ * more predictable in its timing than RDTSC, and
+ * since we can estimate and subtract the avg cost
+ * of timing, the constant cost difference between
+ * RDTSC and RDTSCP will not impact our accuracy.
+ *
+ * ORB_t		-- CPU Cycles
+ * ORB_tick_t	-- CPU Cycles
+ * ORB_REFFREQ	-- CPU core Frequency
+ *********************************************************/
+  #       ifndef HAVE_ORBTIMER_NATIVE
+    #           define HAVE_ORBTIMER_NATIVE "X86_64"
 typedef unsigned long long ORB_t;
-#            define ORB_cycles(T2,T1)     ( (ORB_tick_t) (T2-T1-ORB_min_lat_cyc))
-#            define ORB_cycles_m(T2,T1)   ( (ORB_tick_t) (T2-T1-ORB_min_lat_cyc))
-#            define ORB_cycles_a(T2,T1)   ( (ORB_tick_t) (T2-T1-ORB_avg_lat_cyc))
-#            define ORB_cycles_u(T2,T1)   ( (ORB_tick_t) (T2-T1)                )
-#            define ORB_seconds(T2,T1)    ( ((double)   (T2-T1-ORB_min_lat_cyc)) / ORB_ref_freq)
-#            define ORB_seconds_m(T2,T1)  ( ((double)   (T2-T1-ORB_min_lat_cyc)) / ORB_ref_freq)
-#            define ORB_seconds_a(T2,T1)  ( ((double)   (T2-T1-ORB_avg_lat_cyc)) / ORB_ref_freq)
-#            define ORB_seconds_u(T2,T1)  ( ((double)   (T2-T1)                ) / ORB_ref_freq)
-#            define ORB_read(T)        __asm__ __volatile__ ( "  \n\t" \
-                                                  "mfence           \n\t" \
-                                                  "rdtsc            \n\t" \
-                                                  "movl %%eax,%%eax \n\t" \
-                                                  "salq $32,%%rdx   \n\t" \
-                                                  "orq %%rdx,%%rax  \n\t" : "=a" (T) : : "%rdx")
-#        else			/* HAVE_NATIVE_TIMER */
-#            error "Multiple native timers. " __FILE__ " detected previous value " HAVE_ORBTIMER_NATIVE
-#        endif			/* HAVE_ORBTIMER_NATIVE */
+    #            define ORB_cycles(T2,T1)     ( (ORB_tick_t) (T2 - T1 - ORB_min_lat_cyc))
+    #            define ORB_cycles_m(T2,T1)   ( (ORB_tick_t) (T2 - T1 - ORB_min_lat_cyc))
+    #            define ORB_cycles_a(T2,T1)   ( (ORB_tick_t) (T2 - T1 - ORB_avg_lat_cyc))
+    #            define ORB_cycles_u(T2,T1)   ( (ORB_tick_t) (T2 - T1)                )
+    #            define ORB_seconds(T2,T1)    ( ((double)   (T2 - T1 - ORB_min_lat_cyc)) / ORB_ref_freq)
+    #            define ORB_seconds_m(T2,T1)  ( ((double)   (T2 - T1 - ORB_min_lat_cyc)) / ORB_ref_freq)
+    #            define ORB_seconds_a(T2,T1)  ( ((double)   (T2 - T1 - ORB_avg_lat_cyc)) / ORB_ref_freq)
+    #            define ORB_seconds_u(T2,T1)  ( ((double)   (T2 - T1)                ) / ORB_ref_freq)
+    #            define ORB_read(T)        __asm__ __volatile__ ("  \n\t" \
+                                                                 "mfence           \n\t" \
+                                                                 "rdtsc            \n\t" \
+                                                                 "movl %%eax,%%eax \n\t" \
+                                                                 "salq $32,%%rdx   \n\t" \
+                                                                 "orq %%rdx,%%rax  \n\t" : "=a" (T) : : "%rdx")
+  #        else                 /* HAVE_NATIVE_TIMER */
+    #            error "Multiple native timers. " __FILE__ " detected previous value " HAVE_ORBTIMER_NATIVE
+  #        endif                /* HAVE_ORBTIMER_NATIVE */
 #    elif defined(TIMER_PPC64)
-#        ifndef HAVE_ORBTIMER_NATIVE
+  #        ifndef HAVE_ORBTIMER_NATIVE
 typedef unsigned long ORB_t;
-#            define HAVE_ORBTIMER_NATIVE
-#            define ORB_cycles(T2,T1)     ( (ORB_tick_t) (T2-T1-ORB_min_lat_cyc))
-#            define ORB_cycles_m(T2,T1)   ( (ORB_tick_t) (T2-T1-ORB_min_lat_cyc))
-#            define ORB_cycles_a(T2,T1)   ( (ORB_tick_t) (T2-T1-ORB_avg_lat_cyc))
-#            define ORB_cycles_u(T2,T1)   ( (ORB_tick_t) (T2-T1)                )
-#            define ORB_seconds(T2,T1)    ( ((double)   (T2-T1-ORB_min_lat_cyc)) / ORB_ref_freq)
-#            define ORB_seconds_m(T2,T1)  ( ((double)   (T2-T1-ORB_min_lat_cyc)) / ORB_ref_freq)
-#            define ORB_seconds_a(T2,T1)  ( ((double)   (T2-T1-ORB_avg_lat_cyc)) / ORB_ref_freq)
-#            define ORB_seconds_u(T2,T1)  ( ((double)   (T2-T1)                ) / ORB_ref_freq)
-#            define ORB_read(T)       __asm__ __volatile__ ( "  \n\t" \
-                                                 "mftb %0           \n\t" : "=r" (T) )
-#        else			/* HAVE_ORBTIMER_NATIVE */
-#            error "Multiple native timers. " __FILE__ " detected previous value " HAVE_ORBTIMER_NATIVE
-#        endif			/* HAVE_ORBTIMER_NATIVE */
+    #            define HAVE_ORBTIMER_NATIVE
+    #            define ORB_cycles(T2,T1)     ( (ORB_tick_t) (T2 - T1 - ORB_min_lat_cyc))
+    #            define ORB_cycles_m(T2,T1)   ( (ORB_tick_t) (T2 - T1 - ORB_min_lat_cyc))
+    #            define ORB_cycles_a(T2,T1)   ( (ORB_tick_t) (T2 - T1 - ORB_avg_lat_cyc))
+    #            define ORB_cycles_u(T2,T1)   ( (ORB_tick_t) (T2 - T1)                )
+    #            define ORB_seconds(T2,T1)    ( ((double)   (T2 - T1 - ORB_min_lat_cyc)) / ORB_ref_freq)
+    #            define ORB_seconds_m(T2,T1)  ( ((double)   (T2 - T1 - ORB_min_lat_cyc)) / ORB_ref_freq)
+    #            define ORB_seconds_a(T2,T1)  ( ((double)   (T2 - T1 - ORB_avg_lat_cyc)) / ORB_ref_freq)
+    #            define ORB_seconds_u(T2,T1)  ( ((double)   (T2 - T1)                ) / ORB_ref_freq)
+    #            define ORB_read(T)       __asm__ __volatile__ ("  \n\t" \
+                                                                "mftb %0           \n\t" : "=r" (T) )
+  #        else                 /* HAVE_ORBTIMER_NATIVE */
+    #            error "Multiple native timers. " __FILE__ " detected previous value " HAVE_ORBTIMER_NATIVE
+  #        endif                /* HAVE_ORBTIMER_NATIVE */
 #    elif defined(TIMER_MPI_WTIME)
-       /**********************************************************
-        * NOTES:
-        * On some systems MPI_Wtime() is a very predictable on 
-        * others, less so. Compare against gettimeofday() for
-        * reliability. Prefer CPU Cycle counter if available.
-	*
-	* ORB_t		-- floating point seconds
-	* ORB_tick_t	-- number of MPI_Wtick() intervals
-	* ORB_REFFREQ	-- (double)1.0/MPI_Wtick()
-        *********************************************************/
-#        ifndef HAVE_ORBTIMER_NATIVE
-#            define HAVE_ORBTIMER_NATIVE "MPI_WTIME"
-#            define ORB_IS_FLOATINGPOINT
-#            define ORB_IS_FIXEDFREQUENCY (1.0/MPI_Wtick())
+/**********************************************************
+ * NOTES:
+ * On some systems MPI_Wtime() is a very predictable on
+ * others, less so. Compare against gettimeofday() for
+ * reliability. Prefer CPU Cycle counter if available.
+ *
+ * ORB_t		-- floating point seconds
+ * ORB_tick_t	-- number of MPI_Wtick() intervals
+ * ORB_REFFREQ	-- (double)1.0/MPI_Wtick()
+ *********************************************************/
+  #        ifndef HAVE_ORBTIMER_NATIVE
+    #            define HAVE_ORBTIMER_NATIVE "MPI_WTIME"
+    #            define ORB_IS_FLOATINGPOINT
+    #            define ORB_IS_FIXEDFREQUENCY (1.0 / MPI_Wtick())
 typedef double ORB_t;
 extern double MPI_Wtime();
 extern double MPI_Wtick();
-#            define ORB_cycles(T2,T1)     ( (ORB_tick_t) ((T2-T1-ORB_min_lat_sec)*ORB_ref_freq) )
-#            define ORB_cycles_m(T2,T1)   ( (ORB_tick_t) ((T2-T1-ORB_min_lat_sec)*ORB_ref_freq) )
-#            define ORB_cycles_a(T2,T1)   ( (ORB_tick_t) ((T2-T1-ORB_avg_lat_sec)*ORB_ref_freq) )
-#            define ORB_cycles_u(T2,T1)   ( (ORB_tick_t) ((T2-T1                )*ORB_ref_freq) )
-#            define ORB_seconds(T2,T1)    ( (double)    ((T2-T1-ORB_min_lat_sec)             ) )
-#            define ORB_seconds_m(T2,T1)  ( (double)    ((T2-T1-ORB_min_lat_sec)             ) )
-#            define ORB_seconds_a(T2,T1)  ( (double)    ((T2-T1-ORB_avg_lat_sec)             ) )
-#            define ORB_seconds_u(T2,T1)  ( (double)    ((T2-T1                )             ) )
-#            define ORB_read(T)        T = MPI_Wtime()
-#        else			/* HAVE_ORBTIMER_NATIVE */
-#            error "Multiple native timers. " __FILE__ " detected previous value " HAVE_ORBTIMER_NATIVE
-#        endif			/* HAVE_ORBTIMER_NATIVE */
+    #            define ORB_cycles(T2,T1)     ( (ORB_tick_t) ((T2 - T1 - ORB_min_lat_sec) * ORB_ref_freq) )
+    #            define ORB_cycles_m(T2,T1)   ( (ORB_tick_t) ((T2 - T1 - ORB_min_lat_sec) * ORB_ref_freq) )
+    #            define ORB_cycles_a(T2,T1)   ( (ORB_tick_t) ((T2 - T1 - ORB_avg_lat_sec) * ORB_ref_freq) )
+    #            define ORB_cycles_u(T2,T1)   ( (ORB_tick_t) ((T2 - T1) * ORB_ref_freq) )
+    #            define ORB_seconds(T2,T1)    ( (double)    ((T2 - T1 - ORB_min_lat_sec)             ) )
+    #            define ORB_seconds_m(T2,T1)  ( (double)    ((T2 - T1 - ORB_min_lat_sec)             ) )
+    #            define ORB_seconds_a(T2,T1)  ( (double)    ((T2 - T1 - ORB_avg_lat_sec)             ) )
+    #            define ORB_seconds_u(T2,T1)  ( (double)    ((T2 - T1)             ) )
+    #            define ORB_read(T)        T = MPI_Wtime()
+  #        else                 /* HAVE_ORBTIMER_NATIVE */
+    #            error "Multiple native timers. " __FILE__ " detected previous value " HAVE_ORBTIMER_NATIVE
+  #        endif                /* HAVE_ORBTIMER_NATIVE */
 #    elif defined(TIMER_GTD)
-       /**********************************************************
-        * NOTES:
-        * gettimeofday() is a standard fallback. At best it is
-        * incremented at 1 MHz, however on some systems it could
-        * be incremented at 100 Hz... generally not good enough.
-        * ORB_t 	-- struct timeval
-        * ORB_tick_t 	-- microseconds
-        * ORB_REFFREQ 	-- 1 MHz
-        *********************************************************/
-#        ifndef HAVE_ORBTIMER_NATIVE
-#            define HAVE_ORBTIMER_NATIVE "GETTIMEOFDAY"
-#            define ORB_IS_FIXEDFREQUENCY (1000000)
+/**********************************************************
+ * NOTES:
+ * gettimeofday() is a standard fallback. At best it is
+ * incremented at 1 MHz, however on some systems it could
+ * be incremented at 100 Hz... generally not good enough.
+ * ORB_t    -- struct timeval
+ * ORB_tick_t   -- microseconds
+ * ORB_REFFREQ  -- 1 MHz
+ *********************************************************/
+  #        ifndef HAVE_ORBTIMER_NATIVE
+    #            define HAVE_ORBTIMER_NATIVE "GETTIMEOFDAY"
+    #            define ORB_IS_FIXEDFREQUENCY (1000000)
 typedef struct timeval ORB_t;
-#            define ORB_USEC(T)           ( (ORB_tick_t)((ORB_t)(T)).tv_sec * (GTD_REFFREQ) + (ORB_tick_t)((ORB_t)T).tv_usec )
-#            define ORB_cycles(T2,T1)     ( (ORB_tick_t)( ORB_USEC(T2) - ORB_USEC(T1) - ORB_min_lat_cyc) )
-#            define ORB_cycles_m(T2,T1)   ( (ORB_tick_t)( ORB_USEC(T2) - ORB_USEC(T1) - ORB_min_lat_cyc) )
-#            define ORB_cycles_a(T2,T1)   ( (ORB_tick_t)( ORB_USEC(T2) - ORB_USEC(T1) - ORB_avg_lat_cyc) )
-#            define ORB_cycles_u(T2,T1)   ( (ORB_tick_t)( ORB_USEC(T2) - ORB_USEC(T1) ) )
-#            define ORB_seconds(T2,T1)    ( ( (double)ORB_cycles(T2,T1)   ) / ORB_REFFREQ )
-#            define ORB_seconds_m(T2,T1)  ( ( (double)ORB_cycles_m(T2,T1) ) / ORB_REFFREQ )
-#            define ORB_seconds_a(T2,T1)  ( ( (double)ORB_cycles_a(T2,T1) ) / ORB_REFFREQ )
-#            define ORB_seconds_u(T2,T1)  ( ( (double)ORB_cycles_u(T2,T1) ) / ORB_REFFREQ )
-#            define ORB_read(T)        gettimeofday(&T,NULL)
-#        else			/* HAVE_ORBTIMER_NATIVE */
-#            error "Multiple native timers. " __FILE__ " detected previous value " HAVE_ORBTIMER_NATIVE
-#        endif			/* HAVE_ORBTIMER_NATIVE */
-#    else			/* TIMER_<type> ... no timer type declared */
-#          error ....................................................................
-#          error ....................................................................
-#          error .... No timer selected in __FILE__
-#          error .... Add one of the following to the compile:
-#          error ................ -DTIMER_X86_64 ....... uses X86-64 RDTSC instruction
-#          error ................ -DTIMER_MPI_WTIME .... uses MPI_Wtime()
-#          error ................ -DTIMER_GTD ......... uses gettimeofday()
-#          error .... Undeclared variable complaints below are a side effect of this
-#          error ....................................................................
-#          error ....................................................................
-#    endif			/* TIMER_<type> */
+    #            define ORB_USEC(T)           ( (ORB_tick_t)((ORB_t)(T)).tv_sec * (GTD_REFFREQ) + (ORB_tick_t)((ORB_t)T).tv_usec)
+    #            define ORB_cycles(T2,T1)     ( (ORB_tick_t)(ORB_USEC(T2) - ORB_USEC(T1) - ORB_min_lat_cyc) )
+    #            define ORB_cycles_m(T2,T1)   ( (ORB_tick_t)(ORB_USEC(T2) - ORB_USEC(T1) - ORB_min_lat_cyc) )
+    #            define ORB_cycles_a(T2,T1)   ( (ORB_tick_t)(ORB_USEC(T2) - ORB_USEC(T1) - ORB_avg_lat_cyc) )
+    #            define ORB_cycles_u(T2,T1)   ( (ORB_tick_t)(ORB_USEC(T2) - ORB_USEC(T1) ) )
+    #            define ORB_seconds(T2,T1)    ( ( (double)ORB_cycles(T2,T1)   ) / ORB_REFFREQ)
+    #            define ORB_seconds_m(T2,T1)  ( ( (double)ORB_cycles_m(T2,T1) ) / ORB_REFFREQ)
+    #            define ORB_seconds_a(T2,T1)  ( ( (double)ORB_cycles_a(T2,T1) ) / ORB_REFFREQ)
+    #            define ORB_seconds_u(T2,T1)  ( ( (double)ORB_cycles_u(T2,T1) ) / ORB_REFFREQ)
+    #            define ORB_read(T)        gettimeofday(&T,NULL)
+  #        else                 /* HAVE_ORBTIMER_NATIVE */
+    #            error "Multiple native timers. " __FILE__ " detected previous value " HAVE_ORBTIMER_NATIVE
+  #        endif                /* HAVE_ORBTIMER_NATIVE */
+#    else                       /* TIMER_<type> ... no timer type declared */
+  #          error ....................................................................
+  #          error ....................................................................
+  #          error .... No timer selected in __FILE__
+  #          error .... Add one of the following to the compile:
+  #          error ................ -DTIMER_X86_64 ....... uses X86-64 RDTSC instruction
+  #          error ................ -DTIMER_MPI_WTIME .... uses MPI_Wtime()
+  #          error ................ -DTIMER_GTD ......... uses gettimeofday()
+  #          error .... Undeclared variable complaints below are a side effect of this
+  #          error ....................................................................
+  #          error ....................................................................
+#    endif                      /* TIMER_<type> */
 #    undef ORBEXTERN
-#endif				/* HAVE_ORBTIMER */
+#endif                          /* HAVE_ORBTIMER */

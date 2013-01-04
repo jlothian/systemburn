@@ -1,23 +1,23 @@
 /*
-  This file is part of SystemBurn.
+   This file is part of SystemBurn.
 
-  Copyright (C) 2012, UT-Battelle, LLC.
+   Copyright (C) 2012, UT-Battelle, LLC.
 
-  This product includes software produced by UT-Battelle, LLC under Contract No. 
-  DE-AC05-00OR22725 with the Department of Energy. 
+   This product includes software produced by UT-Battelle, LLC under Contract No.
+   DE-AC05-00OR22725 with the Department of Energy.
 
-  This program is free software; you can redistribute it and/or modify
-  it under the terms of the New BSD 3-clause software license (LICENSE). 
-  
-  This program is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the 
-  LICENSE for more details.
+   This program is free software; you can redistribute it and/or modify
+   it under the terms of the New BSD 3-clause software license (LICENSE).
 
-  For more information please contact the SystemBurn developers at: 
-  systemburn-info@googlegroups.com
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+   LICENSE for more details.
 
-*/
+   For more information please contact the SystemBurn developers at:
+   systemburn-info@googlegroups.com
+
+ */
 #ifndef __SYSTEMHEADERS_H
 #define __SYSTEMHEADERS_H
 
@@ -37,7 +37,7 @@
 #include <inttypes.h>
 #include <time.h>
 #ifdef LINUX_PLACEMENT
-  #include <utmpx.h>	 /* for sched_getcpu */
+  #include <utmpx.h>     /* for sched_getcpu */
   #include <sched.h>
 #endif
 

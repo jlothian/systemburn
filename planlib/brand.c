@@ -1,23 +1,23 @@
 /*
-  This file is part of SystemBurn.
+   This file is part of SystemBurn.
 
-  Copyright (C) 2012, UT-Battelle, LLC.
+   Copyright (C) 2012, UT-Battelle, LLC.
 
-  This product includes software produced by UT-Battelle, LLC under Contract No. 
-  DE-AC05-00OR22725 with the Department of Energy. 
+   This product includes software produced by UT-Battelle, LLC under Contract No.
+   DE-AC05-00OR22725 with the Department of Energy.
 
-  This program is free software; you can redistribute it and/or modify
-  it under the terms of the New BSD 3-clause software license (LICENSE). 
-  
-  This program is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the 
-  LICENSE for more details.
+   This program is free software; you can redistribute it and/or modify
+   it under the terms of the New BSD 3-clause software license (LICENSE).
 
-  For more information please contact the SystemBurn developers at: 
-  systemburn-info@googlegroups.com
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+   LICENSE for more details.
 
-*/
+   For more information please contact the SystemBurn developers at:
+   systemburn-info@googlegroups.com
+
+ */
 #include "brand.h"
 
 /**
@@ -27,20 +27,20 @@
  * \sa brand_init
  * \sa rfraction
  */
-uint64_t brand (brand_t *p) {
-	uint64_t hi=p->hi, lo=p->lo, i=p->ind, ret;
+uint64_t brand(brand_t *p){
+    uint64_t hi = p->hi, lo = p->lo, i = p->ind, ret;
 
-	ret = p->tab[i];
+    ret = p->tab[i];
 
-	_BR_64STEP_(hi,lo,45,118);
+    _BR_64STEP_(hi,lo,45,118);
 
-	p->tab[i] = ret + hi;
+    p->tab[i] = ret + hi;
 
-	p->hi  = hi;
-	p->lo  = lo;
-	p->ind = hi & _maskr(_BR_LG_TABSZ_);
+    p->hi = hi;
+    p->lo = lo;
+    p->ind = hi & _maskr(_BR_LG_TABSZ_);
 
-	return ret;
+    return ret;
 }
 
 /**
@@ -49,27 +49,29 @@ uint64_t brand (brand_t *p) {
  * \param val The initialization value.
  * \sa brand
  */
-void brand_init (brand_t *p, uint64_t val) {
-	int64_t i;
-	uint64_t hi, lo;
+void brand_init(brand_t *p, uint64_t val){
+    int64_t i;
+    uint64_t hi, lo;
 
-	hi = 0x9ccae22ed2c6e578uL ^ val;
-	lo = 0xce4db5d70739bd22uL & _maskl(118-64);
+    hi = 0x9ccae22ed2c6e578uL ^ val;
+    lo = 0xce4db5d70739bd22uL & _maskl(118 - 64);
 
-	for (i = 0; i < 64; i++)
-	_BR_64STEP_(hi,lo,33,118);
+    for(i = 0; i < 64; i++){
+        _BR_64STEP_(hi,lo,33,118);
+    }
 
-	for (i = 0; i < _BR_TABSZ_; i++) {
-	_BR_64STEP_(hi,lo,33,118);
-	p->tab[i] = hi;
-	}
-	p->ind = (uint64_t)(_BR_TABSZ_/2);
-	p->hi  = hi;
-	p->lo  = lo;
+    for(i = 0; i < _BR_TABSZ_; i++){
+        _BR_64STEP_(hi,lo,33,118);
+        p->tab[i] = hi;
+    }
+    p->ind = (uint64_t)(_BR_TABSZ_ / 2);
+    p->hi = hi;
+    p->lo = lo;
 
-	for (i = 0; i < _BR_RUNUP_; i++)
-	(void)brand(p);
-}
+    for(i = 0; i < _BR_RUNUP_; i++){
+        (void)brand(p);
+    }
+} /* brand_init */
 
 /**
  * \brief Gives a random fraction
@@ -79,7 +81,7 @@ void brand_init (brand_t *p, uint64_t val) {
  */
 // A random fraction
 double rfraction(brand_t *p){
-	return  ( (double)(brand(p) & ((1L << 50) - 1)) ) /
-		(double)((1L << 50) - 1);
+    return ( (double)(brand(p) & ((1L << 50) - 1)) ) /
+           (double)((1L << 50) - 1);
 }
 
