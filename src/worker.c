@@ -153,9 +153,7 @@ void *WorkerThread(void *p){
                 }
             }             //DO_PERF
             EmitLog(MyRank, MyHandle->Num, "Thread exiting", -1, PRINT_SOME);
-            fprintf(stderr,"Killing a plan!\n");
             WorkerPlan = killPlan(WorkerPlan);                          /* clean up old plan       */
-            fprintf(stderr,"... done Killing a plan!\n");
             pthread_exit((void *)0);
         } else {
             if(BossPlan != WorkerPlan){                                 /* if the plan was updated */
