@@ -196,7 +196,7 @@ export TEMPER='No valid temperature monitoring|temperature across all cores'
 export LDTOP='General load information|^   Comm [ED].*abled|^   Load runtime|^   Thread count|^   Load schedule'
 export LDBOT='^ *Subload|^   Number of threads|^   Plan|^   cpuset'
 export PLANLB='^   DGEMM|^   RDGEMM|^   [DL]STREAM|^   [DL]STRIDE|^   FFT[12]D|^   GUPS|^   PV[123]|^   SLEEP|^   TILT|^   CBA'
-export PERF="^PERF:"
+export PERF="^PERF:|^PAPI:"
 
 
 # usage: genload TIME PROCESSORS_PER_NODE CORES_PER_PROCESSOR LOAD SIZE
