@@ -52,6 +52,9 @@
   #include <plan_scublas.h>
   #include <plan_cudamem.h>
 #endif
+#ifdef HAVE_OPENCL
+#include <plan_openclmem.h>
+#endif
 
 #define MSG_SIZE 100
 #define WIDTH sizeof(int) * 8 / 2 //Find half of the bits used by an int variable.
@@ -136,6 +139,9 @@ typedef enum {
     CBA,
     TILT,
     ISORT,
+    #ifdef HAVE_OPENCL
+    OPENCLMEM,
+    #endif
     UNKN_PLAN     /* Tells when the plan name is unrecognized.*/
 } plan_choice;
 
@@ -179,6 +185,9 @@ plan_info *plan_list[] = {
     &(CBA_info),
     &(TILT_info),
     &(ISORT_info),
+#ifdef HAVE_OPENCL
+    &(OPENCL_MEM_info),
+#endif
     &(SLEEP_info)     // Default for unknown plans.
 };
   #endif // USED
