@@ -2,9 +2,9 @@
 # Set these values for your system
 CC      = @CONFIG_CC@
 MPICC   = @CONFIG_MPICC@
-CFLAGS  = @CONFIG_CFLAGS@
+CFLAGS  = @CONFIG_CFLAGS@ @CL_CFLAGS@
 LDFLAGS = @CONFIG_LDFLAGS@
-LIBS    = @CONFIG_LIBS@
+LIBS    = @CONFIG_LIBS@ @CL_LIBS@
 DEPC	= @DEPC_PATH@
 
 # Paths to the include, source, plan, and build directories...
@@ -22,6 +22,7 @@ ENABLE_BLAS = @ENABLE_BLAS@
 ENABLE_FFTW = @ENABLE_FFTW@
 ENABLE_CUDA = @ENABLE_CUDA@
 ENABLE_PAPI = @ENABLE_PAPI@
+ENABLE_OPENCL = @ENABLE_OPENCL@
 
 # Search paths for the header files
 #INCLUDES = -I$(SRC_DIR) -I$(PLAN_DIR) -I.
