@@ -6,6 +6,7 @@ CFLAGS  = @CONFIG_CFLAGS@ @CL_CFLAGS@
 LDFLAGS = @CONFIG_LDFLAGS@
 LIBS    = @CONFIG_LIBS@ @CL_LIBS@
 DEPC	= @DEPC_PATH@
+CPPFLAGS = @CPPFLAGS@
 
 # Paths to the include, source, plan, and build directories...
 ABSOLUTE_PATH = @CONFIG_PROJECT_DIR@
@@ -53,7 +54,7 @@ systemburn: build_dir $(ALL_OBJS)
 build_dir:
 	mkdir -p $(BUILD_DIR)
 $(BUILD_DIR)/%.o: %.c
-	$(MPICC) $(CFLAGS) $(INCLUDES) -c $< -o $@
+	$(MPICC) $(CFLAGS) $(INCLUDES) $(CPPFLAGS) -c $< -o $@
 $(BUILD_DIR)/%.d: %.c
 	@echo "Generating dependencies for $< (output in $@)"
 	@mkdir -p $(BUILD_DIR)
