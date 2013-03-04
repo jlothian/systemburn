@@ -35,6 +35,17 @@
   #define PAPI_UNITS { "FLOPS" }
 #endif //HAVE_PAPI
 
+const char *opencl_program =
+  "__kernel void write_pattern(__global int *memory, unsigned long pattern) {int idx = get_global_id(0); memory[idx] = pattern;}\n";
+
+#define NUM_PATTERNS 10
+unsigned int patterns[NUM_PATTERNS] = {0x00000000,0xAAAAAAAA,0x55555555,0xFFFFFFFF,0xA0A0A0A0,0x0A0A0A0A,0x50505050,0x05050505,0xF0F0F0F0,0x0F0F0F0F};
+#define SUB_FACTOR (64*1024*1024)
+
+void print_struct(char *description, OPENCL_MEM_DATA *data) {
+  printf("%s\nThis struct has:\n\tdevice_id: %u\n\tloop_count: %i\n\tdevice_memory: %lu\n", description, data->device_id, data->loop_count, data->device_memory);
+}
+
 /**
  * \brief Allocates and returns the data struct for the plan
  * \param i The struct that holds the input data.
@@ -54,12 +65,20 @@ void *makeOPENCL_MEMPlan(data *i){   // <- Replace YOUR_NAME with the name of yo
         ip = (OPENCL_MEM_DATA *)malloc(sizeof(OPENCL_MEM_DATA));      // <- Change YOUR_TYPE to your defined data type.
         assert(ip);
         if(ip){
+          memset(ip,'\0',sizeof(OPENCL_MEM_DATA));
+          ip->loop_count = 8;
+          if (i->isize>0) ip->device_id  = i->i[0];
+          if (i->isize>1) ip->loop_count = i->i[1];
+          /*
           if(i->isize == 1)
           {
             ip->planner_size = i->i[0];
-          } else {
+          } else if(i->dsize == 1) {
             ip->planner_size = (int)i->d[0];
+          } else {
+            ip->planner_size = SCALE_TO_GPU_MEMORY;
           }
+          */
           //if input happens, make it happen here
           //ip->opencl_data = *i;            // <- Unless is it just an int, change this so that whatever field of your type uses an int get defined here.
         }
@@ -71,6 +90,8 @@ void *makeOPENCL_MEMPlan(data *i){   // <- Replace YOUR_NAME with the name of yo
 /************************
  * This is the place where the memory gets allocated, and data types get initialized to their starting values.
  ***********************/
+//The OpenCL platform init functions don't appear to be thread safe, so this mutex protects those calls.
+pthread_mutex_t opencl_platform_mutex = PTHREAD_MUTEX_INITIALIZER;
 /**
  * \brief Creates and initializes the working data for the plan
  * \param plan The Plan struct that holds the plan's data values.
@@ -120,31 +141,50 @@ int initOPENCL_MEMPlan(void *plan){   // <- Replace YOUR_NAME with the name of y
     }
     if(d){
       cl_int error;
-      /*
-      cl_uint num_platforms = 0;
-      cl_uint num_devices = 0;
-      cl_platform_id *platforms = NULL;
-      cl_device_id *devices = NULL;
-      cl_context context = NULL;
-      */
+
+      pthread_mutex_lock(&opencl_platform_mutex);
       error = clGetPlatformIDs(0, NULL,&(d->num_platforms));
-      printf("error is: %i\n", error);
-      assert(error == CL_SUCCESS);
+      pthread_mutex_unlock(&opencl_platform_mutex);
 
+      assert(error == CL_SUCCESS);
       d->platforms = (cl_platform_id *)malloc(sizeof(cl_platform_id)*d->num_platforms);
+      pthread_mutex_lock(&opencl_platform_mutex);
       error = clGetPlatformIDs(d->num_platforms, d->platforms, NULL);
-      assert(error == CL_SUCCESS);
+      pthread_mutex_unlock(&opencl_platform_mutex);
 
+      assert(error == CL_SUCCESS);
       error = clGetDeviceIDs(d->platforms[0],CL_DEVICE_TYPE_ALL, 0, NULL, &(d->num_devices));
       assert(error == CL_SUCCESS);
-
       d->devices = (cl_device_id *)malloc(sizeof(cl_device_id)*d->num_devices);
       error = clGetDeviceIDs(d->platforms[0],CL_DEVICE_TYPE_ALL, d->num_devices, d->devices, NULL);
       assert(error == CL_SUCCESS);
 
-      d->context = clCreateContext(NULL, d->num_devices, d->devices, NULL, NULL, &error);
+      //d->context = clCreateContext(NULL, d->num_devices, d->devices, NULL, NULL, &error);
+      d->context = clCreateContext(NULL, 1, &(d->devices[d->device_id]), NULL, NULL, &error);
       assert(error == CL_SUCCESS);
-        // Initialize plan specific data here.
+
+      //d->device = d->devices[d->device_id];
+      d->opencl_queue = clCreateCommandQueue(d->context, d->devices[d->device_id], 0, &error);
+      assert(error == CL_SUCCESS);
+
+      error = clGetDeviceInfo(d->devices[d->device_id], CL_DEVICE_GLOBAL_MEM_SIZE, sizeof(cl_ulong), &(d->device_memory), NULL);
+      assert(error == CL_SUCCESS);
+
+      d->device_memory -= SUB_FACTOR;
+
+      d->buffer = clCreateBuffer(d->context, CL_MEM_WRITE_ONLY, d->device_memory, NULL, &error);
+      assert(error == CL_SUCCESS);
+
+      d->return_buffer = (int *)malloc(d->device_memory);
+
+      d->program = clCreateProgramWithSource(d->context, 1, (const char**)&opencl_program,NULL,&error);
+      assert(error == CL_SUCCESS);
+
+      error = clBuildProgram(d->program,1,&(d->devices[d->device_id]),NULL,NULL,NULL);
+      assert(error == CL_SUCCESS);
+
+      d->kernel = clCreateKernel(d->program, "write_pattern", &error);
+      assert(error == CL_SUCCESS);
     }
     return ERR_CLEAN;     // <- This indicates a clean run with no errors. Does not need to be changed.
 } /* initOPENCL_MEMPlan */
@@ -159,13 +199,19 @@ int initOPENCL_MEMPlan(void *plan){   // <- Replace YOUR_NAME with the name of y
 void *killOPENCL_MEMPlan(void *plan){   // <- Replace YOUR_NAME with the name of your module.
     Plan *p;     // <- Plan type. Do not change.
     p = (Plan *)plan;     // <- Setting the Plan pointer. Do not change.
+    OPENCL_MEM_DATA *local_data = (OPENCL_MEM_DATA *)p->vptr;
 
     if(DO_PERF){
         #ifdef HAVE_PAPI
         TEST_PAPI(PAPI_stop(p->PAPI_EventSet, NULL), PAPI_OK, MyRank, 9999, PRINT_SOME);
         #endif //HAVE_PAPI
     }
-
+    clReleaseKernel(local_data->kernel);
+    clReleaseProgram(local_data->program);
+    clReleaseCommandQueue(local_data->opencl_queue);
+    clReleaseContext(local_data->context);
+    free(local_data->devices);
+    free(local_data->platforms);
     free((void *)(p->vptr));    // <- Freeing the used void pointer member of Plan. Do not change.
     free((void *)(plan));    // <- Freeing the used Plan pointer. Do not change.
     return (void *)NULL;    // <- Return statement to ensure nice exit from module.
@@ -174,6 +220,7 @@ void *killOPENCL_MEMPlan(void *plan){   // <- Replace YOUR_NAME with the name of
 /************************
  * This is where the plan gets executed. Place all operations here.
  ***********************/
+
 /**
  * \brief <DESCRIPTION of your plan goes here..>
  * \param plan The Plan struct that holds the plan's data values.
@@ -189,7 +236,9 @@ int execOPENCL_MEMPlan(void *plan){  // <- Replace YOUR_NAME with the name of yo
     Plan *p;
     p = (Plan *)plan;
     p->exec_count++;       // Update the execution counter stored in the plan.
+    OPENCL_MEM_DATA *local_data = (OPENCL_MEM_DATA *)p->vptr;
 
+    cl_int error;
     #ifdef HAVE_PAPI
     /* Start PAPI counters and time */
     TEST_PAPI(PAPI_reset(p->PAPI_EventSet), PAPI_OK, MyRank, 9999, PRINT_SOME);
@@ -198,6 +247,24 @@ int execOPENCL_MEMPlan(void *plan){  // <- Replace YOUR_NAME with the name of yo
 
     ORB_read(t1);         // Store the timestamp for the beginning of the execution.
 
+    size_t work_size[1];
+    int idx,jdx;
+    cl_mem buffer;
+
+    for(jdx=0;jdx < local_data->loop_count; jdx++)
+    for(idx=0;idx < NUM_PATTERNS; idx++)
+    {
+      error = clSetKernelArg(local_data->kernel,0,sizeof(cl_mem),&(local_data->buffer));
+      assert(error == CL_SUCCESS);
+      error = clSetKernelArg(local_data->kernel,1,sizeof(cl_ulong),(void *)&patterns[idx]);
+      assert(error == CL_SUCCESS);
+      work_size[0] = local_data->device_memory / sizeof(unsigned int);
+      error = clEnqueueNDRangeKernel(local_data->opencl_queue, local_data->kernel, 1, NULL, work_size, NULL, 0, NULL, NULL);
+      if(error != 0) printf("Error code: %i on device %lu run number: %i\n", error, local_data->device_id, jdx);
+      assert(error == CL_SUCCESS);
+
+      clEnqueueReadBuffer(local_data->opencl_queue, local_data->buffer, CL_TRUE, 0, local_data->device_memory, local_data->return_buffer, 0, NULL, NULL);
+    }
     // --------------------------------------------
     // Plan is executed here...
     // --------------------------------------------
@@ -285,7 +352,7 @@ char *PLAN_OPENCL_ERRORS[] = {
 };
 
 plan_info OPENCL_MEM_info = {
-    "OPENCL_MEM",     //OPENCL_MEM
+    "OPENCLMEM",     //OPENCL_MEM
     NULL,     //YOUR_ERRORS (if applicable. If not, leave NULL.)
     0,     // Size of ^
     makeOPENCL_MEMPlan,
