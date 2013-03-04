@@ -91,7 +91,7 @@ int initSCUBLASPlan(void *plan){
     p = (Plan *)plan;
 
     #ifdef HAVE_PAPI
-    int temp_event, i;
+    int temp_event;
     int PAPI_Events [NUM_PAPI_EVENTS] = PAPI_COUNTERS;
     char *PAPI_units [NUM_PAPI_EVENTS] = PAPI_UNITS;
     #endif //HAVE_PAPI
