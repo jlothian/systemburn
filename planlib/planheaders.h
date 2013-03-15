@@ -54,6 +54,7 @@
 #endif
 #ifdef HAVE_OPENCL
 #include <plan_openclmem.h>
+#include <plan_dopenclblas.h>
 #endif
 
 #define MSG_SIZE 100
@@ -141,6 +142,7 @@ typedef enum {
     ISORT,
     #ifdef HAVE_OPENCL
     OPENCLMEM,
+    DOPENCLBLAS,
     #endif
     UNKN_PLAN     /* Tells when the plan name is unrecognized.*/
 } plan_choice;
@@ -187,6 +189,7 @@ plan_info *plan_list[] = {
     &(ISORT_info),
 #ifdef HAVE_OPENCL
     &(OPENCL_MEM_info),
+    &(DOPENCLBLAS_info),
 #endif
     &(SLEEP_info)     // Default for unknown plans.
 };
