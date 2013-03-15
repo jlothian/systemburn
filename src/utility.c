@@ -219,11 +219,13 @@ int fsize(char *path){
 char *getFileBuffer(int filesize){
     char *buffer = NULL;
     const size_t PAGE_SIZE = 4096;
-    size_t buffer_size = (filesize / PAGE_SIZE + 1) * PAGE_SIZE;
+    //size_t buffer_size = (filesize / PAGE_SIZE + 1) * PAGE_SIZE;
+    size_t buffer_size = filesize + 2;
     if(filesize > 0){
         /* Allocate memory for the buffer. */
         buffer = (char *)malloc(buffer_size * sizeof(char));
         assert(buffer);
+        memset(buffer, '\0', buffer_size);
     }
 
     return buffer;
@@ -250,7 +252,7 @@ int readFile(char *buffer, int size, FILE *stream){
     buffer[ret + 1] = '\0';
 
     /* Return the number of bytes read. */
-    return ret;
+    return ret+1;
 }
 
 /**
