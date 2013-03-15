@@ -102,41 +102,14 @@ int main(int argc, char **argv, char **envp){
         comm_broadcast_int(&config_filesize);
         config_buffer = getFileBuffer(config_filesize);
     }
-#ifdef NOT_DEFINED_EVER
-    /* hack to checkout OpenCL */
-    printf("Starting hack\n");
-    cl_int error;
-    cl_uint num_platforms = 0;
-    cl_uint num_devices = 0;
-    cl_platform_id *platforms = NULL;
-    cl_device_id *devices = NULL;
-    cl_context context = NULL;
 
-    error = clGetPlatformIDs(0, NULL,&num_platforms);
-    assert(error == CL_SUCCESS);
-
-    platforms = (cl_platform_id *)malloc(sizeof(cl_platform_id)*num_platforms);
-    error = clGetPlatformIDs(num_platforms, platforms, NULL);
-    assert(error == CL_SUCCESS);
-
-    error = clGetDeviceIDs(platforms[0],CL_DEVICE_TYPE_ALL, 0, NULL, &num_devices);
-    assert(error == CL_SUCCESS);
-
-    devices = (cl_device_id *)malloc(sizeof(cl_device_id)*num_devices);
-    error = clGetDeviceIDs(platforms[0],CL_DEVICE_TYPE_ALL, num_devices, devices, NULL);
-    assert(error == CL_SUCCESS);
-
-    context = clCreateContext(NULL, num_devices, devices, NULL, NULL, &error);
-    assert(error == CL_SUCCESS);
-    printf("End of hack\n");
-    /* End of hack */
-#endif
     if(config_filesize == 0){
         comm_finalize();
         exit(1);
     }
 
     err = broadcast_buffer(config_buffer, config_filesize);
+
     err += parseConfig(config_buffer, config_filesize);
     free(config_buffer);
 
