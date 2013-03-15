@@ -143,7 +143,7 @@ int initDCUBLASPlan(void *plan){
         // calculate M for 6 M*M arrays to fill 100%/75%/50% of GPU free memory
         // M = (d->nGpuThreads) * (int)(sqrt(0.75*avail/(6.0*sizeof(double)*gputhreads*gputhreads)));
         // M = (d->nGpuThreads) * (int)(sqrt(0.50*avail/(6.0*sizeof(double)*gputhreads*gputhreads)));
-        M = (d->nGpuThreads) * (int)(sqrt(1.00 * avail / (6.0 * sizeof(double) * gputhreads * gputhreads)));
+        M = (d->nGpuThreads) * (int)(sqrt(0.99 * avail / (6.0 * sizeof(double) * gputhreads * gputhreads)));
         // assume one will fit in host memory
         d->M = M;
         arraybytes = 3 * M * M * sizeof(double);
