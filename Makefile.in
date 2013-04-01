@@ -48,7 +48,7 @@ MAKEDEP := $(DEPC) -MM
 .DEFAULT: all
 all: systemburn
 systemburn: build_dir $(ALL_OBJS)
-	$(MPICC) $(CFLAGS) $(INCLUDES) $(LDFLAGS) $(LIBS) -o systemburn $(ALL_OBJS) $(PAPI_LIB)
+	$(MPICC) $(CFLAGS) $(INCLUDES) $(LDFLAGS) -o systemburn $(ALL_OBJS) $(LIBS) $(PAPI_LIB)
 build_dir:
 	mkdir -p $(BUILD_DIR)
 $(BUILD_DIR)/%.o: %.c
