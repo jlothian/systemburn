@@ -13,6 +13,9 @@
 /* Define if you have a BLAS library. */
 #undef HAVE_BLAS
 
+/* Define to 1 if you have the <CL/cl.h> header file. */
+#undef HAVE_CL_CL_H
+
 /* Define if you have a CUDA library. */
 #undef HAVE_CUBLAS
 
@@ -30,6 +33,12 @@
 
 /* Define if you have the MPI library. */
 #undef HAVE_MPI
+
+/* Define to build with OpenCL support code. */
+#undef HAVE_OPENCL
+
+/* Define to 1 if you have the <OpenCL/cl.h> header file. */
+#undef HAVE_OPENCL_CL_H
 
 /* Define if you want to use PAPI counters */
 #undef HAVE_PAPI
@@ -69,6 +78,9 @@
 
 /* Define to 1 if you have the <utmpx.h> header file. */
 #undef HAVE_UTMPX_H
+
+/* Define to 1 if you have the <windows.h> header file. */
+#undef HAVE_WINDOWS_H
 
 /* Define if you have support for sched_getcpu() and sched_setaffinity(). */
 #undef LINUX_PLACEMENT

@@ -109,6 +109,7 @@ int main(int argc, char **argv, char **envp){
     }
 
     err = broadcast_buffer(config_buffer, config_filesize);
+
     err += parseConfig(config_buffer, config_filesize);
     free(config_buffer);
 
