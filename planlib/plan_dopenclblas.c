@@ -381,7 +381,9 @@ int perfDOPENCLBLASPlan(void *plan){
     if(p->exec_count > 0){        // Ensures the plan has been executed at least once...
         // Assign appropriate plan-specific operation counts to the opcount[] array, such that the
         // indices correspond with the timers used in the exec function.
-      opcounts[TIMER0] = p->exec_count; //* YOUR_OPERATIONS_PER_EXECUTION;         // Where operations can be a function of the input size.
+      const unsigned long M = d->M;
+      const unsigned long M2 = M * M;
+      opcounts[TIMER0] = p->exec_count * 2 * M2 * (M + 1); //* YOUR_OPERATIONS_PER_EXECUTION;         // Where operations can be a function of the input size.
 
         perf_table_update(&p->timers, opcounts, p->name);          // Updates the global table with the performance data.
         #ifdef HAVE_PAPI
@@ -389,8 +391,8 @@ int perfDOPENCLBLASPlan(void *plan){
         #endif     //HAVE_PAPI
 
         double flops = ((double)opcounts[TIMER0] / perftimer_gettime(&p->timers, TIMER0)) / 1e6;       // Example for computing MFLOPS
-        EmitLogfs(MyRank, 9999, "YOUR_PLAN plan performance:", flops, "MFLOPS", PRINT_SOME);                   // Displays calculated performance when the '-v2' command line option is passed.
-        EmitLog  (MyRank, 9999, "YOUR_PLAN execution count :", p->exec_count, PRINT_SOME);
+        EmitLogfs(MyRank, 9999, "DOPENCLBLAS plan performance:", flops, "MFLOPS", PRINT_SOME);                   // Displays calculated performance when the '-v2' command line option is passed.
+        EmitLog  (MyRank, 9999, "DOPENCLBLAS execution count :", p->exec_count, PRINT_SOME);
         ret = ERR_CLEAN;
     }
     return ret;
@@ -430,5 +432,5 @@ plan_info DOPENCLBLAS_info = {
     initDOPENCLBLASPlan,
     killDOPENCLBLASPlan,
     perfDOPENCLBLASPlan,
-    { NULL, NULL, NULL }     //YOUR_UNITS strings naming the units of each timer value (leave NULL if unneeded)
+    { "FLOPS", NULL, NULL }     //YOUR_UNITS strings naming the units of each timer value (leave NULL if unneeded)
 };
