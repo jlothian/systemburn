@@ -43,5 +43,6 @@ endif
 ifeq ($(ENABLE_OPENCL),1)
 PLAN_SRC := $(PLAN_SRC) \
 	$(DIR)/plan_openclmem.c \
-	$(DIR)/plan_dopenclblas.c
+	$(DIR)/plan_dopenclblas.c \
+        $(DIR)/plan_sopenclblas.c
 endif
