@@ -118,7 +118,7 @@ void *makeDOPENCLBLASPlan(data *i){   // <- Replace YOUR_NAME with the name of y
         p->fptr_execplan = &execDOPENCLBLASPlan;         // <- Replace YOUR_NAME with the name of your module.
         p->fptr_killplan = &killDOPENCLBLASPlan;         // <- Replace YOUR_NAME with the name of your module.
         p->fptr_perfplan = &perfDOPENCLBLASPlan;
-        p->name = OPENCLMEM;                           // <- Replace YOUR_NAME with the name of your module.
+        p->name = DOPENCLBLAS;                           // <- Replace YOUR_NAME with the name of your module.
         ip = (DOPENCLBLAS_DATA *)malloc(sizeof(DOPENCLBLAS_DATA));      // <- Change YOUR_TYPE to your defined data type.
         assert(ip);
         if(ip){
