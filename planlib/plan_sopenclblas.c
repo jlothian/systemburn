@@ -23,6 +23,12 @@
 #include <systemburn.h> // <- Necessary to include to get the Plan struct and other neat things.
 #include <planheaders.h> // <- Add your header file (plan_DOPENCLBLAS.h) to planheaders.h to be included. For uniformity, do not include here, and be sure to leave planheaders.h included.
 
+//In OpenCL 1.1 only the queue commands are thread safe, the platform init function is not. All OpenCL loads need to use this mutex to protect the init.
+extern pthread_mutex_t opencl_platform_mutex;
+
+//This is the amount of memory set aside on the GPU for the kernel.
+#define SUB_FACTOR (128*1024*1024)
+
 //If there are other functions to be used by your module, include them somewhere outside of the four required functions. I put them here. Examples in plan_dstream.h and plan_stream.h
 
 // Note: the comment blocks that begin /** and contain tags such as "\brief" are Doxygen comments, used for creating an HTML manual of SystemBurn.
@@ -88,26 +94,8 @@ void systemburn_openclblas_sgemm(SOPENCLBLAS_DATA *local_data){
   assert(error == CL_SUCCESS);
   error = clEnqueueReadBuffer(local_data->opencl_queue, local_data->C, CL_TRUE, 0, M*M*sizeof(float), local_data->C_buffer, 1, &compute_event, NULL);
   assert(error == CL_SUCCESS);
-
-  //printf("Answer in C[0,0] = %lf expected %lf\n", local_data->C_buffer[0], 9.0*M);
-  printf("Checking answer\n");
-  error = 0;
-  const size_t Ms = M*M;
-  const float M9 = M*9.0;
-  for(idx = 0; idx < Ms; idx++) {
-    if(local_data->C_buffer[idx] != M9) error = 1;
-  }
-  if(error == 1) {
-    printf("Found an error\n");
-  } else {
-    printf("No errors\n");
-  }
 }
 #endif
-
-#define SUB_FACTOR ((unsigned long)((unsigned long)128*(unsigned long)1024*(unsigned long)1024 + (unsigned long)1024*(unsigned long)1024*(unsigned long)1024*(unsigned long)3))
-
-extern pthread_mutex_t opencl_platform_mutex;
 
 /**
  * \brief Allocates and returns the data struct for the plan
@@ -115,7 +103,6 @@ extern pthread_mutex_t opencl_platform_mutex;
  * \return void* Data struct
  */
 void *makeSOPENCLBLASPlan(data *i){   // <- Replace YOUR_NAME with the name of your module.
-  printf("start make\n");
     Plan *p;     // <- Plan pointer, necessary to integrate with systemburn. Do not change.
     SOPENCLBLAS_DATA *ip;     // <- Change YOUR_TYPE with the name of your data type defined in the header file.
     p = (Plan *)malloc(sizeof(Plan));  // <- Allocating the necessary Plan pointer. Do not change.
@@ -134,18 +121,6 @@ void *makeSOPENCLBLASPlan(data *i){   // <- Replace YOUR_NAME with the name of y
           ip->loop_count = 8;
           if (i->isize>0) ip->device_id  = i->i[0];
           if (i->isize>1) ip->loop_count = i->i[1];
-          /*
-          if(i->isize == 1)
-          {
-            ip->planner_size = i->i[0];
-          } else if(i->dsize == 1) {
-            ip->planner_size = (int)i->d[0];
-          } else {
-            ip->planner_size = SCALE_TO_GPU_MEMORY;
-          }
-          */
-          //if input happens, make it happen here
-          //ip->opencl_data = *i;            // <- Unless is it just an int, change this so that whatever field of your type uses an int get defined here.
         }
         (p->vptr) = (void *)ip;      // <- Setting the void pointer member of the Plan struct to your data structure. Only change if you change the name of ip earlier in this function.
     }
@@ -162,7 +137,6 @@ void *makeSOPENCLBLASPlan(data *i){   // <- Replace YOUR_NAME with the name of y
  * \return Error flag value
  */
 int initSOPENCLBLASPlan(void *plan){   // <- Replace YOUR_NAME with the name of your module.
-  printf("Start init\n");
     if(!plan){
         return make_error(ALLOC, generic_err);           // <- This is the error code for one of the malloc fails.
     }
@@ -256,14 +230,15 @@ int initSOPENCLBLASPlan(void *plan){   // <- Replace YOUR_NAME with the name of 
       if(error != CL_SUCCESS) {
         char error_log[1024*1024];
         error = clGetProgramBuildInfo(d->program,d->devices[d->device_id],CL_PROGRAM_BUILD_LOG,1024*1024,error_log,NULL);
-        printf("Build failed with the following log:\n%s\n",error_log);
+        char error_message[1024*1024];
+        snprintf(error_message, 1024*1024, "OpenCL kernel build failed with the following error:\n%s\n", error_log);
+        EmitLog(MyRank,9999, error_message, 0, PRINT_ALWAYS);
         abort();
       }
 
       d->kernel = clCreateKernel(d->program, "sgemm_sysburn", &error);
       assert(error == CL_SUCCESS);
     }
-    printf("Init of opencl sgemm successful\n");
     return ERR_CLEAN;     // <- This indicates a clean run with no errors. Does not need to be changed.
 } /* initDOPENCLBLASPlan */
 
@@ -331,7 +306,6 @@ int execSOPENCLBLASPlan(void *plan){  // <- Replace YOUR_NAME with the name of y
 
     for(jdx=0;jdx < local_data->loop_count; jdx++)
     {
-      //void systemburn_openclblas_dgemm(const int M, const double alpha, const double *A, const double *B, const double beta, double *C){
       systemburn_openclblas_sgemm(local_data);
     }
     // --------------------------------------------
@@ -372,7 +346,6 @@ int execSOPENCLBLASPlan(void *plan){  // <- Replace YOUR_NAME with the name of y
  * \returns Success or failure in calculating the performance.
  */
 int perfSOPENCLBLASPlan(void *plan){
-  printf("entered perf\n");
     int ret = ~ERR_CLEAN;
     uint64_t opcounts[NUM_TIMERS];
     Plan *p;
