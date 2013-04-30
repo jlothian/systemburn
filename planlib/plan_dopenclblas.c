@@ -212,17 +212,21 @@ int initDOPENCLBLASPlan(void *plan){   // <- Replace YOUR_NAME with the name of 
 
       d->M = ((int)sqrt(d->device_memory/sizeof(double))) / 3;
 
+      size_t page_size = sysconf(_SC_PAGESIZE);
       d->A = clCreateBuffer(d->context, CL_MEM_READ_ONLY, d->M*d->M*sizeof(double), NULL, &error);
       assert(error == CL_SUCCESS);
-      d->A_buffer = (double *)malloc(d->M*d->M*sizeof(double));
+      error = posix_memalign((void **)&(d->A_buffer),page_size,d->M*d->M*sizeof(double));
+      assert(error==0);
 
       d->B = clCreateBuffer(d->context, CL_MEM_READ_ONLY, d->M*d->M*sizeof(double), NULL, &error);
       assert(error == CL_SUCCESS);
-      d->B_buffer = (double *)malloc(d->M*d->M*sizeof(double));
+      error = posix_memalign((void **)&(d->B_buffer),page_size,d->M*d->M*sizeof(double));
+      assert(error==0);
 
       d->C = clCreateBuffer(d->context, CL_MEM_WRITE_ONLY, d->M*d->M*sizeof(double), NULL, &error);
       assert(error == CL_SUCCESS);
-      d->C_buffer = (double *)malloc(d->M*d->M*sizeof(double));
+      error = posix_memalign((void **)&(d->C_buffer),page_size,d->M*d->M*sizeof(double));
+      assert(error==0);
 
       d->program = clCreateProgramWithSource(d->context, 1, (const char**)&opencl_dgemm_program,NULL,&error);
       assert(error == CL_SUCCESS);

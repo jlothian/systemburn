@@ -160,7 +160,9 @@ int initOPENCL_MEMPlan(void *plan){   // <- Replace YOUR_NAME with the name of y
       d->buffer = clCreateBuffer(d->context, CL_MEM_WRITE_ONLY, d->device_memory, NULL, &error);
       assert(error == CL_SUCCESS);
 
-      d->return_buffer = (int *)malloc(d->device_memory);
+      size_t page_size = sysconf(_SC_PAGESIZE);
+      error = posix_memalign((void **)&(d->return_buffer), page_size, d->device_memory);
+      assert(error == 0);
 
       d->program = clCreateProgramWithSource(d->context, 1, (const char**)&opencl_program,NULL,&error);
       assert(error == CL_SUCCESS);

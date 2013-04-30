@@ -213,15 +213,18 @@ int initSOPENCLBLASPlan(void *plan){   // <- Replace YOUR_NAME with the name of 
 
       d->A = clCreateBuffer(d->context, CL_MEM_READ_ONLY, d->M*d->M*sizeof(float), NULL, &error);
       assert(error == CL_SUCCESS);
-      d->A_buffer = (float *)malloc(d->M*d->M*sizeof(float));
+      error = posix_memalign((void **)&(d->A_buffer),page_size,d->M*d->M*sizeof(float));
+      assert(error==0);
 
       d->B = clCreateBuffer(d->context, CL_MEM_READ_ONLY, d->M*d->M*sizeof(float), NULL, &error);
       assert(error == CL_SUCCESS);
-      d->B_buffer = (float *)malloc(d->M*d->M*sizeof(float));
+      error = posix_memalign((void **)&(d->B_buffer),page_size,d->M*d->M*sizeof(float));
+      assert(error==0);
 
       d->C = clCreateBuffer(d->context, CL_MEM_READ_WRITE, d->M*d->M*sizeof(float), NULL, &error);
       assert(error == CL_SUCCESS);
-      d->C_buffer = (float *)malloc(d->M*d->M*sizeof(float));
+      error = posix_memalign((void **)&(d->C_buffer),page_size,d->M*d->M*sizeof(float));
+      assert(error==0);
 
       d->program = clCreateProgramWithSource(d->context, 1, (const char**)&opencl_sgemm_program,NULL,&error);
       assert(error == CL_SUCCESS);
