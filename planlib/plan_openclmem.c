@@ -22,6 +22,12 @@
 #include <systemburn.h> // <- Necessary to include to get the Plan struct and other neat things.
 #include <planheaders.h> // <- Add your header file (plan_OPENCL_MEM.h) to planheaders.h to be included. For uniformity, do not include here, and be sure to leave planheaders.h included.
 
+//The OpenCL platform init functions don't appear to be thread safe, so this mutex protects those calls.
+pthread_mutex_t opencl_platform_mutex = PTHREAD_MUTEX_INITIALIZER;
+
+//The amount of memeory to set aside for OpenCL program execution. If the kernel isn't running because of memory constraints up this number
+#define SUB_FACTOR (64*1024*1024)
+
 //If there are other functions to be used by your module, include them somewhere outside of the four required functions. I put them here. Examples in plan_dstream.h and plan_stream.h
 
 // Note: the comment blocks that begin /** and contain tags such as "\brief" are Doxygen comments, used for creating an HTML manual of SystemBurn.
@@ -40,11 +46,6 @@ const char *opencl_program =
 
 #define NUM_PATTERNS 10
 unsigned int patterns[NUM_PATTERNS] = {0x00000000,0xAAAAAAAA,0x55555555,0xFFFFFFFF,0xA0A0A0A0,0x0A0A0A0A,0x50505050,0x05050505,0xF0F0F0F0,0x0F0F0F0F};
-#define SUB_FACTOR (64*1024*1024)
-
-void print_struct(char *description, OPENCL_MEM_DATA *data) {
-  printf("%s\nThis struct has:\n\tdevice_id: %u\n\tloop_count: %i\n\tdevice_memory: %lu\n", description, data->device_id, data->loop_count, data->device_memory);
-}
 
 /**
  * \brief Allocates and returns the data struct for the plan
@@ -69,18 +70,6 @@ void *makeOPENCL_MEMPlan(data *i){   // <- Replace YOUR_NAME with the name of yo
           ip->loop_count = 8;
           if (i->isize>0) ip->device_id  = i->i[0];
           if (i->isize>1) ip->loop_count = i->i[1];
-          /*
-          if(i->isize == 1)
-          {
-            ip->planner_size = i->i[0];
-          } else if(i->dsize == 1) {
-            ip->planner_size = (int)i->d[0];
-          } else {
-            ip->planner_size = SCALE_TO_GPU_MEMORY;
-          }
-          */
-          //if input happens, make it happen here
-          //ip->opencl_data = *i;            // <- Unless is it just an int, change this so that whatever field of your type uses an int get defined here.
         }
         (p->vptr) = (void *)ip;      // <- Setting the void pointer member of the Plan struct to your data structure. Only change if you change the name of ip earlier in this function.
     }
@@ -90,8 +79,6 @@ void *makeOPENCL_MEMPlan(data *i){   // <- Replace YOUR_NAME with the name of yo
 /************************
  * This is the place where the memory gets allocated, and data types get initialized to their starting values.
  ***********************/
-//The OpenCL platform init functions don't appear to be thread safe, so this mutex protects those calls.
-pthread_mutex_t opencl_platform_mutex = PTHREAD_MUTEX_INITIALIZER;
 /**
  * \brief Creates and initializes the working data for the plan
  * \param plan The Plan struct that holds the plan's data values.
@@ -159,11 +146,9 @@ int initOPENCL_MEMPlan(void *plan){   // <- Replace YOUR_NAME with the name of y
       error = clGetDeviceIDs(d->platforms[0],CL_DEVICE_TYPE_ALL, d->num_devices, d->devices, NULL);
       assert(error == CL_SUCCESS);
 
-      //d->context = clCreateContext(NULL, d->num_devices, d->devices, NULL, NULL, &error);
       d->context = clCreateContext(NULL, 1, &(d->devices[d->device_id]), NULL, NULL, &error);
       assert(error == CL_SUCCESS);
 
-      //d->device = d->devices[d->device_id];
       d->opencl_queue = clCreateCommandQueue(d->context, d->devices[d->device_id], 0, &error);
       assert(error == CL_SUCCESS);
 
@@ -175,7 +160,9 @@ int initOPENCL_MEMPlan(void *plan){   // <- Replace YOUR_NAME with the name of y
       d->buffer = clCreateBuffer(d->context, CL_MEM_WRITE_ONLY, d->device_memory, NULL, &error);
       assert(error == CL_SUCCESS);
 
-      d->return_buffer = (int *)malloc(d->device_memory);
+      size_t page_size = sysconf(_SC_PAGESIZE);
+      error = posix_memalign((void **)&(d->return_buffer), page_size, d->device_memory);
+      assert(error == 0);
 
       d->program = clCreateProgramWithSource(d->context, 1, (const char**)&opencl_program,NULL,&error);
       assert(error == CL_SUCCESS);
@@ -260,7 +247,6 @@ int execOPENCL_MEMPlan(void *plan){  // <- Replace YOUR_NAME with the name of yo
       assert(error == CL_SUCCESS);
       work_size[0] = local_data->device_memory / sizeof(unsigned int);
       error = clEnqueueNDRangeKernel(local_data->opencl_queue, local_data->kernel, 1, NULL, work_size, NULL, 0, NULL, NULL);
-      if(error != 0) printf("Error code: %i on device %lu run number: %i\n", error, local_data->device_id, jdx);
       assert(error == CL_SUCCESS);
 
       clEnqueueReadBuffer(local_data->opencl_queue, local_data->buffer, CL_TRUE, 0, local_data->device_memory, local_data->return_buffer, 0, NULL, NULL);

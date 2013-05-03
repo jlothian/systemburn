@@ -28,6 +28,7 @@ m4_include(m4/cuda_new.m4)
 m4_include(m4/orbt.m4)
 m4_include(m4/papi.m4)
 m4_include(m4/opencl.m4)
+m4_include(m4/ax_openacc.m4)
 
 dnl
 dnl Check for C compiler 
@@ -87,12 +88,17 @@ AC_CHECK_HEADER([sys/stat.h],
 dnl
 dnl Check for OpenMP, MPI, and Pthreads
 dnl
-AC_OPENMP
+
 ACX_MPI([],AC_MSG_ERROR(MPI C compiler not found.))
 ACX_PTHREAD([],AC_MSG_ERROR(Pthreads library not found.))
 if test "x$PTHREAD_CC" != "x" ; then
 	CC="$PTHREAD_CC"
 fi
+AC_OPENMP
+
+ENABLE_OPENACC=0
+AX_OPENACC([ENABLE_OPENACC=1])
+AC_SUBST(ENABLE_OPENACC)
 
 dnl
 dnl Checks for typedefs, structures, and compiler characteristics.
