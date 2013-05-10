@@ -58,8 +58,8 @@
 #include <plan_sopenclblas.h>
 #endif
 #ifdef _OPENACC
-#include <plan_dopenaccdgemm.h>
-#include <plan_sopenaccdgemm.h>
+#include <plan_dopenaccgemm.h>
+#include <plan_sopenaccgemm.h>
 #endif
 
 #define MSG_SIZE 100
@@ -203,8 +203,8 @@ plan_info *plan_list[] = {
     &(SOPENCLBLAS_info),
 #endif
 #ifdef _OPENACC
-    &(DOPENACCDGEMM_info),
-    &(SOPENACCDGEMM_info),
+    &(DOPENACCGEMM_info),
+    &(SOPENACCGEMM_info),
 #endif
     &(SLEEP_info)     // Default for unknown plans.
 };

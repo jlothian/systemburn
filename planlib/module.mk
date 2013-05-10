@@ -46,3 +46,9 @@ PLAN_SRC := $(PLAN_SRC) \
 	$(DIR)/plan_dopenclblas.c \
         $(DIR)/plan_sopenclblas.c
 endif
+
+ifeq ($(ENABLE_OPENACC),1)
+PLAN_SRC := $(PLAN_SRC) \
+	$(DIR)/plan_sopenaccgemm.c \
+	$(DIR)/plan_dopenaccgemm.c
+endif
