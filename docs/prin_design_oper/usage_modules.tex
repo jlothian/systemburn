@@ -28,6 +28,14 @@ to load new modules at any time so as to fine tune the load. The modules which a
 	of iterations per pass, and the number of GPU ``threads'' to be used, may optionally be specified.  The defaults are device 0, count 8, and a thread count appropriate to the device hardware.
 	\item[SCUBLAS device count threads] A CUDA single precision load for GPUs. The load is sized automatically to memory available on the GPU. The GPU ``device'' number, the ``count''
 	of iterations per pass, and the number of GPU ``threads'' to be used, may optionally be specified.  The defaults are device 0, count 8, and a thread count appropriate to the device hardware.
+        \item[DOPENCLBLAS device count threads] A OpenCL double precision load for GPUs. The load is sized automatically to memory available on the GPU. The GPU ``device'' number, the ``count''
+        of iterations per pass, and the number of GPU ``threads'' to be used, may optionally be specified.  The defaults are device 0, count 8, and a thread count appropriate to the device hardware.
+        \item[SOPENCLBLAS device count threads] A OpenCL single precision load for GPUs. The load is sized automatically to memory available on the GPU. The GPU ``device'' number, the ``count''
+        of iterations per pass, and the number of GPU ``threads'' to be used, may optionally be specified.  The defaults are device 0, count 8, and a thread count appropriate to the device hardware.
+        \item[DOPENACCGEMM device count threads] A OpenACC double precision load for GPUs. The load is sized automatically to memory available on the GPU. The GPU ``device'' number, the ``count''
+        of iterations per pass, and the number of GPU ``threads'' to be used, may optionally be specified.  The defaults are device 0, count 8, and a thread count appropriate to the device hardware.
+        \item[SOPENACCGEMM device count threads] A OpenACC single precision load for GPUs. The load is sized automatically to memory available on the GPU. The GPU ``device'' number, the ``count''
+        of iterations per pass, and the number of GPU ``threads'' to be used, may optionally be specified.  The defaults are device 0, count 8, and a thread count appropriate to the device hardware.
 	\item[WRITE megabytes string] A I/O load which writes ``megabytes'' to files with ``string'' as the basename (this can be a path).
 	\item[SLEEP N] Puts a thread to sleep for N seconds at a time. 
 \end{description}
