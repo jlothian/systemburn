@@ -211,6 +211,7 @@ int initSOPENCLBLASPlan(void *plan){   // <- Replace YOUR_NAME with the name of 
 
       d->M = ((int)sqrt(d->device_memory/sizeof(float))) / 3;
 
+      size_t page_size = sysconf(_SC_PAGESIZE);
       d->A = clCreateBuffer(d->context, CL_MEM_READ_ONLY, d->M*d->M*sizeof(float), NULL, &error);
       assert(error == CL_SUCCESS);
       error = posix_memalign((void **)&(d->A_buffer),page_size,d->M*d->M*sizeof(float));
