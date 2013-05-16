@@ -82,8 +82,10 @@ void *makeSOPENACCGEMMPlan(data *i){   // <- Replace YOUR_NAME with the name of 
         if(ip){
           memset(ip,'\0',sizeof(SOPENACCGEMM_DATA));
           ip->loop_count = 8;
+          ip->device_memory = 2ul * 1024ul * 1024ul * 1024ul;
           if (i->isize>0) ip->device_id  = i->i[0];
           if (i->isize>1) ip->loop_count = i->i[1];
+          if (i->dsize>0) ip->device_memory = i->d[0];
         }
         (p->vptr) = (void *)ip;      // <- Setting the void pointer member of the Plan struct to your data structure. Only change if you change the name of ip earlier in this function.
     }
@@ -147,11 +149,11 @@ int initSOPENACCGEMMPlan(void *plan){   // <- Replace YOUR_NAME with the name of
       acc_device_t my_device = acc_get_device_type();
       acc_set_device_num(d->device_id, my_device);
 
-      d->device_memory = (1024ul*1024ul*1024ul*2ul); //For now we hard code this.
       //d->device_memory = system_burn_accelerator_memory(d->device_id);
-      d->device_memory -= SUB_FACTOR;
+      //d->device_memory -= SUB_FACTOR;
 
       d->M = ((int)sqrt(d->device_memory/sizeof(float))) / 3;
+
       size_t page_size = sysconf(_SC_PAGESIZE);
       error = posix_memalign((void **)&(d->A_buffer),page_size,d->M*d->M*sizeof(float));
       assert(error==0);
