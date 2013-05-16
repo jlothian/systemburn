@@ -8,9 +8,11 @@ A: Basic requirements are a either a working MPI compiler or a
    plan-specific:
      Plan    Requirement
      ----------------------
-     fftw*   fftw3 library
-     *gemm*  C BLAS library (GSL works well here)
-     *cublas CUDA SDK
+     fftw*        fftw3 library
+     *gemm*       C BLAS library (GSL works well here)
+     *cublas      CUDA SDK
+     *openclblas  OpenCL libraries from your accelerator vendor
+     *openaccgemm A compiler that can handle OpenACC pragmas
 
 Q: How many MPI ranks or SHMEM PEs should I place on each shared memory node of my system?
 A: One. SystemBurn is a hybrid parallel program. MPI or SHMEM is used between nodes to
