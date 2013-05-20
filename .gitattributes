@@ -2,3 +2,4 @@ uncrustify.cfg export-ignore
 .gitattributes export-ignore
 .gitignore export-ignore
 m4 export-ignore
+configure.ac export-ignore
