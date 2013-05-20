@@ -27,6 +27,8 @@ m4_include(m4/shmem.m4)
 m4_include(m4/cuda_new.m4)
 m4_include(m4/orbt.m4)
 m4_include(m4/papi.m4)
+m4_include(m4/opencl.m4)
+m4_include(m4/ax_openacc.m4)
 
 dnl
 dnl Check for C compiler 
@@ -86,12 +88,17 @@ AC_CHECK_HEADER([sys/stat.h],
 dnl
 dnl Check for OpenMP, MPI, and Pthreads
 dnl
-AC_OPENMP
+
 ACX_MPI([],AC_MSG_ERROR(MPI C compiler not found.))
 ACX_PTHREAD([],AC_MSG_ERROR(Pthreads library not found.))
 if test "x$PTHREAD_CC" != "x" ; then
 	CC="$PTHREAD_CC"
 fi
+AC_OPENMP
+
+ENABLE_OPENACC=0
+AX_OPENACC([ENABLE_OPENACC=1])
+AC_SUBST(ENABLE_OPENACC)
 
 dnl
 dnl Checks for typedefs, structures, and compiler characteristics.
@@ -220,6 +227,13 @@ if test "x$enable_debug" = "xno"; then
 	AC_DEFINE(NDEBUG,1,[Define to disable debugging assert()s.])
 fi
 
+ENABLE_OPENCL=0
+AX_CHECK_CL
+if test "X$no_cl" != "Xyes"; then
+    AC_DEFINE(HAVE_OPENCL,1,[Define to build with OpenCL support code.])
+    ENABLE_OPENCL=1
+fi
+AC_SUBST(ENABLE_OPENCL)
 dnl
 dnl Sets the compilation options
 dnl
@@ -227,7 +241,7 @@ CONFIG_CC="$CC"
 CONFIG_MPICC="$MPICC"
 CONFIG_CFLAGS="$CFLAGS $PTHREAD_CFLAGS $OPENMP_CFLAGS $FFTW3_INC $BLAS_INC $CUDA_INC $PAPI_INC"
 CONFIG_LDFLAGS="$LDFLAGS"
-CONFIG_LIBS="$MPI_LIBS $PTHREAD_LIBS $LDFLAGS $LIBS $BLAS_LIBS $FFTW3_LIBS $MATH_LIBS $SHMEM_LIBS $CUDA_LIBS $PAPI_LIBS"
+CONFIG_LIBS="$MPI_LIBS $PTHREAD_LIBS $LDFLAGS $LIBS $BLAS_LIBS $FFTW3_LIBS $MATH_LIBS $SHMEM_LIBS $CUDA_LIBS $PAPI_LIBS "
 AC_SUBST(CONFIG_CC)
 AC_SUBST(CONFIG_MPICC)
 AC_SUBST(CONFIG_CFLAGS)
