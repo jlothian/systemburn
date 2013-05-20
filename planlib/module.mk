@@ -33,7 +33,6 @@ PLAN_SRC := $(PLAN_SRC) \
 	$(DIR)/plan_fftw2d.c
 endif
 
-
 ifeq ($(ENABLE_CUDA),1)
 PLAN_SRC := $(PLAN_SRC) \
 	$(DIR)/plan_dcublas.c \
@@ -41,4 +40,15 @@ PLAN_SRC := $(PLAN_SRC) \
 	$(DIR)/plan_scublas.c
 endif
 
+ifeq ($(ENABLE_OPENCL),1)
+PLAN_SRC := $(PLAN_SRC) \
+	$(DIR)/plan_openclmem.c \
+	$(DIR)/plan_dopenclblas.c \
+        $(DIR)/plan_sopenclblas.c
+endif
 
+ifeq ($(ENABLE_OPENACC),1)
+PLAN_SRC := $(PLAN_SRC) \
+	$(DIR)/plan_sopenaccgemm.c \
+	$(DIR)/plan_dopenaccgemm.c
+endif
