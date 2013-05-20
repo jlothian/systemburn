@@ -9,3 +9,5 @@ Makefile
 build
 systemburn
 *~
+.DS_Store
+\#*
