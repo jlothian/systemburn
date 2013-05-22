@@ -102,3 +102,11 @@ A: The following are required to build:
 Q: The docs/html and docs/man directories are empty?
 A: From systemburn's main directory, run
 	doxygen Doxyfile
+
+Q: When I run OpenACC jobs on multiple gpus systemburn will sometimes 
+   crash. Is this a bug in systemburn?
+A: No. As of now (May 2013) the OpenACC spec specifies that compilers do not 
+   have to support multi-gpu configurations. As of this writing OpenACC 2.0 
+   also doesn't require support for these configurations either. Because of
+   this, no current OpenACC compiler will support multi-gpu configurations.
+   It may work anyways, but this is random chance.
