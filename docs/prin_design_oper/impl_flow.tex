@@ -50,3 +50,15 @@
 \end{itemize}
 
 
+\subsection{PAPI}
+
+If the Performance API (PAPI) library is installed on the system being used, 
+SystemBurn can be configured to collect and report the system counters provided by PAPI.
+The desired counters must be specified in the plan modules that are to be used.
+The templates, \verb!new_module.c! and \verb!new_module.h! in the \verb!planlib! directory, 
+provide the format for incorporating the PAPI counters into a module.
+As many counters as desired can be added to the \verb!PAPI_COUNTERS! structure;
+however, there is a global limit on the  number of counters actually recorded and reported.
+This limit, \verb!TOTAL_PAPI_EVENTS!, is in \verb!src/performance.h! and can be altered as needed.
+Additional PAPI documentation, including a list of the available counters, can be found at 
+\verb!http://icl.cs.utk.edu/papi!.
