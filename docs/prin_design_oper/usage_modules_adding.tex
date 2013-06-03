@@ -10,6 +10,7 @@ modules. The steps to add new modules to SystemBurn are as follows:
 	\item Do the same for the header file, \verb!new_module.h!. This is where you will create all of the structures for the new module.
 	\item Be sure both files are in the \verb!planlib! directory.
         \item Be sure the names of all the functions and their prototypes match. Also, it is recommended that they fall into the same naming scheme as the existing loads. i.e. makeFFT1DPlan(*) (FFT1D is the name of the load.) However, this naming scheme is not necessary for the program to function. You need the 6 listed functions, as well as a plan\_info struct.
+        \item If using PAPI, edit the PAPI variables at the top of the file to reflect the appropriate number of events you wish to track, the names of the events to track, and unit descriptions for these events. No other changes to PAPI specific functionality within the module should be needed.
 	\item In the make function, one of the parameters that it will receive will be the memory footprint size for the main data structure of your plan. You will need to convert this into the variables you need in order to correctly allocate memory.
 		\begin{enumerate}
 			\item A good example is \verb!plan_dgemm.c!: in its make function, it must separate the given memory footprint into 3 identical 2D arrays of doubles. To do this, it divides by \verb!3*sizeof(double)!, then takes the square root of the result. This results in a total memory usage of the value given in the load file.
