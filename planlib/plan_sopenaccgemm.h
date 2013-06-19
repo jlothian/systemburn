@@ -35,13 +35,13 @@ extern plan_info SOPENACCGEMM_info;
 //Below is a sample data structure. This is optional, but your module will probably need some form of input to function.
 
 typedef struct {
-  float *A_buffer;
-  float *B_buffer;
-  float *C_buffer;
-  size_t M;
-  int device_id;
-  int loop_count;
-  size_t device_memory;
+    float *A_buffer;
+    float *B_buffer;
+    float *C_buffer;
+    size_t M;
+    int device_id;
+    int loop_count;
+    size_t device_memory;
 } SOPENACCGEMM_DATA;
 
 #endif /* __PLAN_DOPENCLBLAS_H */

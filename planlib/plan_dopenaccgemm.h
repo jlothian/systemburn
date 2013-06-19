@@ -35,14 +35,14 @@ extern plan_info DOPENACCGEMM_info;
 //Below is a sample data structure. This is optional, but your module will probably need some form of input to function.
 
 typedef struct {
-  //int planner_size;
-  double *A_buffer;
-  double *B_buffer;
-  double *C_buffer;
-  size_t M;
-  int device_id;
-  int loop_count;
-  size_t device_memory;
+    //int planner_size;
+    double *A_buffer;
+    double *B_buffer;
+    double *C_buffer;
+    size_t M;
+    int device_id;
+    int loop_count;
+    size_t device_memory;
 } DOPENACCGEMM_DATA;
 
 #endif /* __PLAN_DOPENACCGEMM_H */

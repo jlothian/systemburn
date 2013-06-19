@@ -868,7 +868,7 @@ plan_choice setPlan(char *planName){
     }
     if(!found){
         return UNKN_PLAN;
-    } else  {
+    } else {
         return i;
     }
 }

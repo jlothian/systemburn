@@ -24,7 +24,7 @@
 #include <planheaders.h> // <- Add your header file (plan_DOPENACCGEMM.h) to planheaders.h to be included. For uniformity, do not include here, and be sure to leave planheaders.h included.
 
 //This is the amount of memory set aside on the GPU for the kernel.
-#define SUB_FACTOR (128*1024*1024)
+#define SUB_FACTOR (128 * 1024 * 1024)
 
 //If there are other functions to be used by your module, include them somewhere outside of the four required functions. I put them here. Examples in plan_dstream.h and plan_stream.h
 
@@ -39,26 +39,26 @@
   #define PAPI_UNITS { "FLOPS" }
 #endif //HAVE_PAPI
 
-void gpu_dgemm(size_t M, double A[M][M], double B[M][M], double C[M][M], const double alpha, const double beta) {
-#pragma acc kernels loop independent
-  for(int idx=0; idx < M; idx++) {
-#pragma acc loop independent
-    for(int jdx=0; jdx < M; jdx++) {
-      double accumulator;
-      accumulator=0;
-      C[idx][jdx] *= beta;
+void gpu_dgemm(size_t M, double A[M][M], double B[M][M], double C[M][M], const double alpha, const double beta){
+    #pragma acc kernels loop independent
+    for(int idx = 0; idx < M; idx++){
+        #pragma acc loop independent
+        for(int jdx = 0; jdx < M; jdx++){
+            double accumulator;
+            accumulator = 0;
+            C[idx][jdx] *= beta;
 
-      for(int mdx=0; mdx < M; mdx++) {
-        accumulator += A[mdx][jdx] * B[idx][mdx];
-      }
+            for(int mdx = 0; mdx < M; mdx++){
+                accumulator += A[mdx][jdx] * B[idx][mdx];
+            }
 
-      C[idx][jdx] += accumulator * alpha;
-    }
-  } // aac data region
-}
+            C[idx][jdx] += accumulator * alpha;
+        }
+    } // aac data region
+} /* gpu_dgemm */
 
 void systemburn_openaccblas_dgemm(DOPENACCGEMM_DATA *local_data){
-  gpu_dgemm(local_data->M, local_data->A_buffer, local_data->B_buffer, local_data->C_buffer, 1.0, 0.0);
+    gpu_dgemm(local_data->M, local_data->A_buffer, local_data->B_buffer, local_data->C_buffer, 1.0, 0.0);
 }
 
 /**
@@ -81,12 +81,18 @@ void *makeDOPENACCGEMMPlan(data *i){   // <- Replace YOUR_NAME with the name of 
         ip = (DOPENACCGEMM_DATA *)malloc(sizeof(DOPENACCGEMM_DATA));      // <- Change YOUR_TYPE to your defined data type.
         assert(ip);
         if(ip){
-          memset(ip,'\0',sizeof(DOPENACCGEMM_DATA));
-          ip->loop_count = 8;
-          ip->device_memory = 2ul*1024ul*1024ul*1024ul;
-          if (i->isize>0) ip->device_id  = i->i[0];
-          if (i->isize>1) ip->loop_count = i->i[1];
-          if (i->dsize>0) ip->device_memory = lrint(i->d[0]);
+            memset(ip,'\0',sizeof(DOPENACCGEMM_DATA));
+            ip->loop_count = 8;
+            ip->device_memory = 2ul * 1024ul * 1024ul * 1024ul;
+            if(i->isize > 0){
+                ip->device_id = i->i[0];
+            }
+            if(i->isize > 1){
+                ip->loop_count = i->i[1];
+            }
+            if(i->dsize > 0){
+                ip->device_memory = lrint(i->d[0]);
+            }
         }
         (p->vptr) = (void *)ip;      // <- Setting the void pointer member of the Plan struct to your data structure. Only change if you change the name of ip earlier in this function.
     }
@@ -145,32 +151,32 @@ int initDOPENACCGEMMPlan(void *plan){   // <- Replace YOUR_NAME with the name of
         #endif     //HAVE_PAPI
     }
     if(d){
-      int error;
+        int error;
 
-      acc_device_t my_device = acc_get_device_type();
-      acc_set_device_num(d->device_id, my_device);
+        acc_device_t my_device = acc_get_device_type();
+        acc_set_device_num(d->device_id, my_device);
 
-      //When OpenACC can report back on accelerator size, these two lines should be enabled
-      //d->device_memory = system_burn_accelerator_memory(d->device_id);
-      //d->device_memory -= SUB_FACTOR;
+        //When OpenACC can report back on accelerator size, these two lines should be enabled
+        //d->device_memory = system_burn_accelerator_memory(d->device_id);
+        //d->device_memory -= SUB_FACTOR;
 
-      d->M = ((int)sqrt(d->device_memory/sizeof(double))) / 3;
+        d->M = ((int)sqrt(d->device_memory / sizeof(double))) / 3;
 
-      size_t page_size = sysconf(_SC_PAGESIZE);
-      error = posix_memalign((void **)&(d->A_buffer),page_size,d->M*d->M*sizeof(double));
-      assert(error==0);
+        size_t page_size = sysconf(_SC_PAGESIZE);
+        error = posix_memalign((void **)&(d->A_buffer),page_size,d->M * d->M * sizeof(double));
+        assert(error == 0);
 
-      error = posix_memalign((void **)&(d->B_buffer),page_size,d->M*d->M*sizeof(double));
-      assert(error==0);
+        error = posix_memalign((void **)&(d->B_buffer),page_size,d->M * d->M * sizeof(double));
+        assert(error == 0);
 
-      error = posix_memalign((void **)&(d->C_buffer),page_size,d->M*d->M*sizeof(double));
-      assert(error==0);
+        error = posix_memalign((void **)&(d->C_buffer),page_size,d->M * d->M * sizeof(double));
+        assert(error == 0);
 
-      for(size_t idx=0; idx < d->M*d->M; idx++) {
-        d->A_buffer[idx] = (double)4.5;
-        d->B_buffer[idx] = (double)2.0;
-        d->C_buffer[idx] = (double)0.0;
-      }
+        for(size_t idx = 0; idx < d->M * d->M; idx++){
+            d->A_buffer[idx] = (double)4.5;
+            d->B_buffer[idx] = (double)2.0;
+            d->C_buffer[idx] = (double)0.0;
+        }
     }
     return ERR_CLEAN;     // <- This indicates a clean run with no errors. Does not need to be changed.
 } /* initDOPENACCGEMMPlan */
@@ -198,7 +204,7 @@ void *killDOPENACCGEMMPlan(void *plan){   // <- Replace YOUR_NAME with the name 
     free((void *)(p->vptr));    // <- Freeing the used void pointer member of Plan. Do not change.
     free((void *)(plan));    // <- Freeing the used Plan pointer. Do not change.
     return (void *)NULL;    // <- Return statement to ensure nice exit from module.
-}
+} /* killDOPENACCGEMMPlan */
 
 /************************
  * This is where the plan gets executed. Place all operations here.
@@ -233,9 +239,8 @@ int execDOPENACCGEMMPlan(void *plan){  // <- Replace YOUR_NAME with the name of 
 
     int jdx;
 
-    for(jdx=0;jdx < local_data->loop_count; jdx++)
-    {
-      systemburn_openaccblas_dgemm(local_data);
+    for(jdx = 0; jdx < local_data->loop_count; jdx++){
+        systemburn_openaccblas_dgemm(local_data);
     }
     // --------------------------------------------
     // Plan is executed here...
@@ -284,9 +289,9 @@ int perfDOPENACCGEMMPlan(void *plan){
     if(p->exec_count > 0){        // Ensures the plan has been executed at least once...
         // Assign appropriate plan-specific operation counts to the opcount[] array, such that the
         // indices correspond with the timers used in the exec function.
-      const unsigned long M = d->M;
-      const unsigned long M2 = M * M;
-      opcounts[TIMER0] = p->exec_count * 2 * M2 * (M + 1); //* YOUR_OPERATIONS_PER_EXECUTION;         // Where operations can be a function of the input size.
+        const unsigned long M = d->M;
+        const unsigned long M2 = M * M;
+        opcounts[TIMER0] = p->exec_count * 2 * M2 * (M + 1); //* YOUR_OPERATIONS_PER_EXECUTION;         // Where operations can be a function of the input size.
 
         perf_table_update(&p->timers, opcounts, p->name);          // Updates the global table with the performance data.
         #ifdef HAVE_PAPI

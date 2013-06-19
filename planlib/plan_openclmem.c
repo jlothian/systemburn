@@ -26,7 +26,7 @@
 pthread_mutex_t opencl_platform_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 //The amount of memeory to set aside for OpenCL program execution. If the kernel isn't running because of memory constraints up this number
-#define SUB_FACTOR (64*1024*1024)
+#define SUB_FACTOR (64 * 1024 * 1024)
 
 //If there are other functions to be used by your module, include them somewhere outside of the four required functions. I put them here. Examples in plan_dstream.h and plan_stream.h
 
@@ -42,10 +42,12 @@ pthread_mutex_t opencl_platform_mutex = PTHREAD_MUTEX_INITIALIZER;
 #endif //HAVE_PAPI
 
 const char *opencl_program =
-  "__kernel void write_pattern(__global int *memory, unsigned long pattern) {int idx = get_global_id(0); memory[idx] = pattern;}\n";
+    "__kernel void write_pattern(__global int *memory, unsigned long pattern) {int idx = get_global_id(0); memory[idx] = pattern;}\n";
 
 #define NUM_PATTERNS 10
-unsigned int patterns[NUM_PATTERNS] = {0x00000000,0xAAAAAAAA,0x55555555,0xFFFFFFFF,0xA0A0A0A0,0x0A0A0A0A,0x50505050,0x05050505,0xF0F0F0F0,0x0F0F0F0F};
+unsigned int patterns[NUM_PATTERNS] = {
+    0x00000000,0xAAAAAAAA,0x55555555,0xFFFFFFFF,0xA0A0A0A0,0x0A0A0A0A,0x50505050,0x05050505,0xF0F0F0F0,0x0F0F0F0F
+};
 
 /**
  * \brief Allocates and returns the data struct for the plan
@@ -66,10 +68,14 @@ void *makeOPENCL_MEMPlan(data *i){   // <- Replace YOUR_NAME with the name of yo
         ip = (OPENCL_MEM_DATA *)malloc(sizeof(OPENCL_MEM_DATA));      // <- Change YOUR_TYPE to your defined data type.
         assert(ip);
         if(ip){
-          memset(ip,'\0',sizeof(OPENCL_MEM_DATA));
-          ip->loop_count = 8;
-          if (i->isize>0) ip->device_id  = i->i[0];
-          if (i->isize>1) ip->loop_count = i->i[1];
+            memset(ip,'\0',sizeof(OPENCL_MEM_DATA));
+            ip->loop_count = 8;
+            if(i->isize > 0){
+                ip->device_id = i->i[0];
+            }
+            if(i->isize > 1){
+                ip->loop_count = i->i[1];
+            }
         }
         (p->vptr) = (void *)ip;      // <- Setting the void pointer member of the Plan struct to your data structure. Only change if you change the name of ip earlier in this function.
     }
@@ -127,51 +133,51 @@ int initOPENCL_MEMPlan(void *plan){   // <- Replace YOUR_NAME with the name of y
         #endif     //HAVE_PAPI
     }
     if(d){
-      cl_int error;
+        cl_int error;
 
-      pthread_mutex_lock(&opencl_platform_mutex);
-      error = clGetPlatformIDs(0, NULL,&(d->num_platforms));
-      pthread_mutex_unlock(&opencl_platform_mutex);
+        pthread_mutex_lock(&opencl_platform_mutex);
+        error = clGetPlatformIDs(0, NULL,&(d->num_platforms));
+        pthread_mutex_unlock(&opencl_platform_mutex);
 
-      assert(error == CL_SUCCESS);
-      d->platforms = (cl_platform_id *)malloc(sizeof(cl_platform_id)*d->num_platforms);
-      pthread_mutex_lock(&opencl_platform_mutex);
-      error = clGetPlatformIDs(d->num_platforms, d->platforms, NULL);
-      pthread_mutex_unlock(&opencl_platform_mutex);
+        assert(error == CL_SUCCESS);
+        d->platforms = (cl_platform_id *)malloc(sizeof(cl_platform_id) * d->num_platforms);
+        pthread_mutex_lock(&opencl_platform_mutex);
+        error = clGetPlatformIDs(d->num_platforms, d->platforms, NULL);
+        pthread_mutex_unlock(&opencl_platform_mutex);
 
-      assert(error == CL_SUCCESS);
-      error = clGetDeviceIDs(d->platforms[0],CL_DEVICE_TYPE_ALL, 0, NULL, &(d->num_devices));
-      assert(error == CL_SUCCESS);
-      d->devices = (cl_device_id *)malloc(sizeof(cl_device_id)*d->num_devices);
-      error = clGetDeviceIDs(d->platforms[0],CL_DEVICE_TYPE_ALL, d->num_devices, d->devices, NULL);
-      assert(error == CL_SUCCESS);
+        assert(error == CL_SUCCESS);
+        error = clGetDeviceIDs(d->platforms[0],CL_DEVICE_TYPE_ALL, 0, NULL, &(d->num_devices));
+        assert(error == CL_SUCCESS);
+        d->devices = (cl_device_id *)malloc(sizeof(cl_device_id) * d->num_devices);
+        error = clGetDeviceIDs(d->platforms[0],CL_DEVICE_TYPE_ALL, d->num_devices, d->devices, NULL);
+        assert(error == CL_SUCCESS);
 
-      d->context = clCreateContext(NULL, 1, &(d->devices[d->device_id]), NULL, NULL, &error);
-      assert(error == CL_SUCCESS);
+        d->context = clCreateContext(NULL, 1, &(d->devices[d->device_id]), NULL, NULL, &error);
+        assert(error == CL_SUCCESS);
 
-      d->opencl_queue = clCreateCommandQueue(d->context, d->devices[d->device_id], 0, &error);
-      assert(error == CL_SUCCESS);
+        d->opencl_queue = clCreateCommandQueue(d->context, d->devices[d->device_id], 0, &error);
+        assert(error == CL_SUCCESS);
 
-      error = clGetDeviceInfo(d->devices[d->device_id], CL_DEVICE_GLOBAL_MEM_SIZE, sizeof(cl_ulong), &(d->device_memory), NULL);
-      assert(error == CL_SUCCESS);
+        error = clGetDeviceInfo(d->devices[d->device_id], CL_DEVICE_GLOBAL_MEM_SIZE, sizeof(cl_ulong), &(d->device_memory), NULL);
+        assert(error == CL_SUCCESS);
 
-      d->device_memory -= SUB_FACTOR;
+        d->device_memory -= SUB_FACTOR;
 
-      d->buffer = clCreateBuffer(d->context, CL_MEM_WRITE_ONLY, d->device_memory, NULL, &error);
-      assert(error == CL_SUCCESS);
+        d->buffer = clCreateBuffer(d->context, CL_MEM_WRITE_ONLY, d->device_memory, NULL, &error);
+        assert(error == CL_SUCCESS);
 
-      size_t page_size = sysconf(_SC_PAGESIZE);
-      error = posix_memalign((void **)&(d->return_buffer), page_size, d->device_memory);
-      assert(error == 0);
+        size_t page_size = sysconf(_SC_PAGESIZE);
+        error = posix_memalign((void **)&(d->return_buffer), page_size, d->device_memory);
+        assert(error == 0);
 
-      d->program = clCreateProgramWithSource(d->context, 1, (const char**)&opencl_program,NULL,&error);
-      assert(error == CL_SUCCESS);
+        d->program = clCreateProgramWithSource(d->context, 1, (const char **)&opencl_program,NULL,&error);
+        assert(error == CL_SUCCESS);
 
-      error = clBuildProgram(d->program,1,&(d->devices[d->device_id]),NULL,NULL,NULL);
-      assert(error == CL_SUCCESS);
+        error = clBuildProgram(d->program,1,&(d->devices[d->device_id]),NULL,NULL,NULL);
+        assert(error == CL_SUCCESS);
 
-      d->kernel = clCreateKernel(d->program, "write_pattern", &error);
-      assert(error == CL_SUCCESS);
+        d->kernel = clCreateKernel(d->program, "write_pattern", &error);
+        assert(error == CL_SUCCESS);
     }
     return ERR_CLEAN;     // <- This indicates a clean run with no errors. Does not need to be changed.
 } /* initOPENCL_MEMPlan */
@@ -202,7 +208,7 @@ void *killOPENCL_MEMPlan(void *plan){   // <- Replace YOUR_NAME with the name of
     free((void *)(p->vptr));    // <- Freeing the used void pointer member of Plan. Do not change.
     free((void *)(plan));    // <- Freeing the used Plan pointer. Do not change.
     return (void *)NULL;    // <- Return statement to ensure nice exit from module.
-}
+} /* killOPENCL_MEMPlan */
 
 /************************
  * This is where the plan gets executed. Place all operations here.
@@ -238,18 +244,18 @@ int execOPENCL_MEMPlan(void *plan){  // <- Replace YOUR_NAME with the name of yo
     int idx,jdx;
     cl_mem buffer;
 
-    for(jdx=0;jdx < local_data->loop_count; jdx++)
-    for(idx=0;idx < NUM_PATTERNS; idx++)
-    {
-      error = clSetKernelArg(local_data->kernel,0,sizeof(cl_mem),&(local_data->buffer));
-      assert(error == CL_SUCCESS);
-      error = clSetKernelArg(local_data->kernel,1,sizeof(cl_ulong),(void *)&patterns[idx]);
-      assert(error == CL_SUCCESS);
-      work_size[0] = local_data->device_memory / sizeof(unsigned int);
-      error = clEnqueueNDRangeKernel(local_data->opencl_queue, local_data->kernel, 1, NULL, work_size, NULL, 0, NULL, NULL);
-      assert(error == CL_SUCCESS);
+    for(jdx = 0; jdx < local_data->loop_count; jdx++){
+        for(idx = 0; idx < NUM_PATTERNS; idx++){
+            error = clSetKernelArg(local_data->kernel,0,sizeof(cl_mem),&(local_data->buffer));
+            assert(error == CL_SUCCESS);
+            error = clSetKernelArg(local_data->kernel,1,sizeof(cl_ulong),(void *)&patterns[idx]);
+            assert(error == CL_SUCCESS);
+            work_size[0] = local_data->device_memory / sizeof(unsigned int);
+            error = clEnqueueNDRangeKernel(local_data->opencl_queue, local_data->kernel, 1, NULL, work_size, NULL, 0, NULL, NULL);
+            assert(error == CL_SUCCESS);
 
-      clEnqueueReadBuffer(local_data->opencl_queue, local_data->buffer, CL_TRUE, 0, local_data->device_memory, local_data->return_buffer, 0, NULL, NULL);
+            clEnqueueReadBuffer(local_data->opencl_queue, local_data->buffer, CL_TRUE, 0, local_data->device_memory, local_data->return_buffer, 0, NULL, NULL);
+        }
     }
     // --------------------------------------------
     // Plan is executed here...
@@ -298,7 +304,7 @@ int perfOPENCL_MEMPlan(void *plan){
     if(p->exec_count > 0){        // Ensures the plan has been executed at least once...
         // Assign appropriate plan-specific operation counts to the opcount[] array, such that the
         // indices correspond with the timers used in the exec function.
-      opcounts[TIMER0] = p->exec_count; //* YOUR_OPERATIONS_PER_EXECUTION;         // Where operations can be a function of the input size.
+        opcounts[TIMER0] = p->exec_count; //* YOUR_OPERATIONS_PER_EXECUTION;         // Where operations can be a function of the input size.
 
         perf_table_update(&p->timers, opcounts, p->name);          // Updates the global table with the performance data.
         #ifdef HAVE_PAPI

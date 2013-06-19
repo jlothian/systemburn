@@ -35,25 +35,25 @@ extern plan_info DOPENCLBLAS_info;
 //Below is a sample data structure. This is optional, but your module will probably need some form of input to function.
 
 typedef struct {
-  //int planner_size;
-  cl_mem A;
-  double *A_buffer;
-  cl_mem B;
-  double *B_buffer;
-  cl_mem C;
-  double *C_buffer;
-  size_t M;
-  cl_command_queue opencl_queue;
-  cl_uint device_id;
-  int loop_count;
-  cl_ulong device_memory;
-  cl_program program;
-  cl_kernel kernel;
-  cl_uint num_platforms;
-  cl_uint num_devices;
-  cl_platform_id *platforms;
-  cl_device_id *devices;
-  cl_context context;
+    //int planner_size;
+    cl_mem A;
+    double *A_buffer;
+    cl_mem B;
+    double *B_buffer;
+    cl_mem C;
+    double *C_buffer;
+    size_t M;
+    cl_command_queue opencl_queue;
+    cl_uint device_id;
+    int loop_count;
+    cl_ulong device_memory;
+    cl_program program;
+    cl_kernel kernel;
+    cl_uint num_platforms;
+    cl_uint num_devices;
+    cl_platform_id *platforms;
+    cl_device_id *devices;
+    cl_context context;
 } DOPENCLBLAS_DATA;
 
 #endif /* __PLAN_DOPENCLBLAS_H */

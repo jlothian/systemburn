@@ -103,7 +103,7 @@ void *makeISORTPlan(data *i){
         if(ip){
             if(i->isize == 1){
                 ip->array_size = i->i[0] / sizeof (uint64_t);   //
-            } else     {
+            } else {
                 ip->array_size = i->d[0] / sizeof (uint64_t);   //
             }
         }

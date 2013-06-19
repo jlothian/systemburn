@@ -27,7 +27,7 @@
 extern pthread_mutex_t opencl_platform_mutex;
 
 //This is the amount of memory set aside on the GPU for the kernel.
-#define SUB_FACTOR (128*1024*1024)
+#define SUB_FACTOR (128 * 1024 * 1024)
 
 //If there are other functions to be used by your module, include them somewhere outside of the four required functions. I put them here. Examples in plan_dstream.h and plan_stream.h
 
@@ -48,54 +48,57 @@ extern pthread_mutex_t opencl_platform_mutex;
 //A simplified DGEMM that only works for square matricies.
 
 char *opencl_sgemm_program =
-  "__kernel void sgemm_sysburn(__global float *A, __global float *B, __global float *C, long M, float alpha, float beta){\n"
-  "int idx = get_global_id(0);int jdx = get_global_id(1);unsigned long current_number;float accumulated_value=0.0;\n"
-  "for(current_number=0;current_number<M;current_number++){accumulated_value+=A[idx*M+current_number]*B[current_number*M+jdx];}\n"
-  "C[idx*M+jdx] = accumulated_value * alpha + C[idx*M+jdx] * beta;}"
+    "__kernel void sgemm_sysburn(__global float *A, __global float *B, __global float *C, long M, float alpha, float beta){\n"
+    "int idx = get_global_id(0);int jdx = get_global_id(1);unsigned long current_number;float accumulated_value=0.0;\n"
+    "for(current_number=0;current_number<M;current_number++){accumulated_value+=A[idx*M+current_number]*B[current_number*M+jdx];}\n"
+    "C[idx*M+jdx] = accumulated_value * alpha + C[idx*M+jdx] * beta;}"
 ;
 
 void systemburn_openclblas_sgemm(SOPENCLBLAS_DATA *local_data){
-  cl_int error;
-  const float alpha = 1.0;
-  const float beta = 0.0;
-  const size_t M = local_data->M;
-  cl_event write_events[2];
-  cl_event compute_event;
-  size_t work_size[2] = {M,M};
-  long idx;
+    cl_int error;
+    const float alpha = 1.0;
+    const float beta = 0.0;
+    const size_t M = local_data->M;
+    cl_event write_events[2];
+    cl_event compute_event;
+    size_t work_size[2] = {
+        M,M
+    };
+    long idx;
 
-  for(idx=0;idx < M*M; idx++){
-    local_data->A_buffer[idx] = 2.0;
-  }
- 
-  error = clEnqueueWriteBuffer(local_data->opencl_queue,local_data->A,CL_FALSE,0,M*M*sizeof(float),local_data->A_buffer,0,NULL,&(write_events[0]));
-  assert(error == CL_SUCCESS);
+    for(idx = 0; idx < M * M; idx++){
+        local_data->A_buffer[idx] = 2.0;
+    }
 
-  for(idx=0;idx < M*M; idx++){
-    local_data->B_buffer[idx] = 4.5;
-  }
+    error = clEnqueueWriteBuffer(local_data->opencl_queue,local_data->A,CL_FALSE,0,M * M * sizeof(float),local_data->A_buffer,0,NULL,&(write_events[0]));
+    assert(error == CL_SUCCESS);
 
-  error = clEnqueueWriteBuffer(local_data->opencl_queue,local_data->B,CL_FALSE,0,M*M*sizeof(float),local_data->B_buffer,0,NULL,&(write_events[1]));
-  assert(error == CL_SUCCESS);
-  error = clSetKernelArg(local_data->kernel,0,sizeof(cl_mem),&(local_data->A));
-  assert(error == CL_SUCCESS);
-  error = clSetKernelArg(local_data->kernel,1,sizeof(cl_mem),&(local_data->B));
-  assert(error == CL_SUCCESS);
-  error = clSetKernelArg(local_data->kernel,2,sizeof(cl_mem),&(local_data->C));
-  assert(error == CL_SUCCESS);
-  error = clSetKernelArg(local_data->kernel,3,sizeof(unsigned long),&(local_data->M));
-  assert(error == CL_SUCCESS);
-  error = clSetKernelArg(local_data->kernel,4,sizeof(float),&(alpha));
-  assert(error == CL_SUCCESS);
-  error = clSetKernelArg(local_data->kernel,5,sizeof(float),&(beta));
-  assert(error == CL_SUCCESS);
+    for(idx = 0; idx < M * M; idx++){
+        local_data->B_buffer[idx] = 4.5;
+    }
 
-  error = clEnqueueNDRangeKernel(local_data->opencl_queue, local_data->kernel, 2, NULL, work_size, NULL, 2, write_events, &compute_event);
-  assert(error == CL_SUCCESS);
-  error = clEnqueueReadBuffer(local_data->opencl_queue, local_data->C, CL_TRUE, 0, M*M*sizeof(float), local_data->C_buffer, 1, &compute_event, NULL);
-  assert(error == CL_SUCCESS);
-}
-#endif
+    error = clEnqueueWriteBuffer(local_data->opencl_queue,local_data->B,CL_FALSE,0,M * M * sizeof(float),local_data->B_buffer,0,NULL,&(write_events[1]));
+    assert(error == CL_SUCCESS);
+    error = clSetKernelArg(local_data->kernel,0,sizeof(cl_mem),&(local_data->A));
+    assert(error == CL_SUCCESS);
+    error = clSetKernelArg(local_data->kernel,1,sizeof(cl_mem),&(local_data->B));
+    assert(error == CL_SUCCESS);
+    error = clSetKernelArg(local_data->kernel,2,sizeof(cl_mem),&(local_data->C));
+    assert(error == CL_SUCCESS);
+    error = clSetKernelArg(local_data->kernel,3,sizeof(unsigned long),&(local_data->M));
+    assert(error == CL_SUCCESS);
+    error = clSetKernelArg(local_data->kernel,4,sizeof(float),&(alpha));
+    assert(error == CL_SUCCESS);
+    error = clSetKernelArg(local_data->kernel,5,sizeof(float),&(beta));
+    assert(error == CL_SUCCESS);
+
+    error = clEnqueueNDRangeKernel(local_data->opencl_queue, local_data->kernel, 2, NULL, work_size, NULL, 2, write_events, &compute_event);
+    assert(error == CL_SUCCESS);
+    error = clEnqueueReadBuffer(local_data->opencl_queue, local_data->C, CL_TRUE, 0, M * M * sizeof(float), local_data->C_buffer, 1, &compute_event, NULL);
+    assert(error == CL_SUCCESS);
+} /* systemburn_openclblas_sgemm */
+
+#endif /* ifdef USE_INTERNAL_SGEMM */
 
 /**
  * \brief Allocates and returns the data struct for the plan
@@ -117,10 +120,14 @@ void *makeSOPENCLBLASPlan(data *i){   // <- Replace YOUR_NAME with the name of y
         ip = (SOPENCLBLAS_DATA *)malloc(sizeof(SOPENCLBLAS_DATA));      // <- Change YOUR_TYPE to your defined data type.
         assert(ip);
         if(ip){
-          memset(ip,'\0',sizeof(SOPENCLBLAS_DATA));
-          ip->loop_count = 8;
-          if (i->isize>0) ip->device_id  = i->i[0];
-          if (i->isize>1) ip->loop_count = i->i[1];
+            memset(ip,'\0',sizeof(SOPENCLBLAS_DATA));
+            ip->loop_count = 8;
+            if(i->isize > 0){
+                ip->device_id = i->i[0];
+            }
+            if(i->isize > 1){
+                ip->loop_count = i->i[1];
+            }
         }
         (p->vptr) = (void *)ip;      // <- Setting the void pointer member of the Plan struct to your data structure. Only change if you change the name of ip earlier in this function.
     }
@@ -179,69 +186,69 @@ int initSOPENCLBLASPlan(void *plan){   // <- Replace YOUR_NAME with the name of 
         #endif     //HAVE_PAPI
     }
     if(d){
-      cl_int error;
+        cl_int error;
 
-      pthread_mutex_lock(&opencl_platform_mutex);
-      error = clGetPlatformIDs(0, NULL,&(d->num_platforms));
-      pthread_mutex_unlock(&opencl_platform_mutex);
+        pthread_mutex_lock(&opencl_platform_mutex);
+        error = clGetPlatformIDs(0, NULL,&(d->num_platforms));
+        pthread_mutex_unlock(&opencl_platform_mutex);
 
-      assert(error == CL_SUCCESS);
-      d->platforms = (cl_platform_id *)malloc(sizeof(cl_platform_id)*d->num_platforms);
-      pthread_mutex_lock(&opencl_platform_mutex);
-      error = clGetPlatformIDs(d->num_platforms, d->platforms, NULL);
-      pthread_mutex_unlock(&opencl_platform_mutex);
+        assert(error == CL_SUCCESS);
+        d->platforms = (cl_platform_id *)malloc(sizeof(cl_platform_id) * d->num_platforms);
+        pthread_mutex_lock(&opencl_platform_mutex);
+        error = clGetPlatformIDs(d->num_platforms, d->platforms, NULL);
+        pthread_mutex_unlock(&opencl_platform_mutex);
 
-      assert(error == CL_SUCCESS);
-      error = clGetDeviceIDs(d->platforms[0],CL_DEVICE_TYPE_ALL, 0, NULL, &(d->num_devices));
-      assert(error == CL_SUCCESS);
-      d->devices = (cl_device_id *)malloc(sizeof(cl_device_id)*d->num_devices);
-      error = clGetDeviceIDs(d->platforms[0],CL_DEVICE_TYPE_ALL, d->num_devices, d->devices, NULL);
-      assert(error == CL_SUCCESS);
+        assert(error == CL_SUCCESS);
+        error = clGetDeviceIDs(d->platforms[0],CL_DEVICE_TYPE_ALL, 0, NULL, &(d->num_devices));
+        assert(error == CL_SUCCESS);
+        d->devices = (cl_device_id *)malloc(sizeof(cl_device_id) * d->num_devices);
+        error = clGetDeviceIDs(d->platforms[0],CL_DEVICE_TYPE_ALL, d->num_devices, d->devices, NULL);
+        assert(error == CL_SUCCESS);
 
-      d->context = clCreateContext(NULL, 1, &(d->devices[d->device_id]), NULL, NULL, &error);
-      assert(error == CL_SUCCESS);
+        d->context = clCreateContext(NULL, 1, &(d->devices[d->device_id]), NULL, NULL, &error);
+        assert(error == CL_SUCCESS);
 
-      d->opencl_queue = clCreateCommandQueue(d->context, d->devices[d->device_id], 0, &error);
-      assert(error == CL_SUCCESS);
+        d->opencl_queue = clCreateCommandQueue(d->context, d->devices[d->device_id], 0, &error);
+        assert(error == CL_SUCCESS);
 
-      error = clGetDeviceInfo(d->devices[d->device_id], CL_DEVICE_GLOBAL_MEM_SIZE, sizeof(cl_ulong), &(d->device_memory), NULL);
-      assert(error == CL_SUCCESS);
+        error = clGetDeviceInfo(d->devices[d->device_id], CL_DEVICE_GLOBAL_MEM_SIZE, sizeof(cl_ulong), &(d->device_memory), NULL);
+        assert(error == CL_SUCCESS);
 
-      d->device_memory -= SUB_FACTOR;
+        d->device_memory -= SUB_FACTOR;
 
-      d->M = ((int)sqrt(d->device_memory/sizeof(float))) / 3;
+        d->M = ((int)sqrt(d->device_memory / sizeof(float))) / 3;
 
-      size_t page_size = sysconf(_SC_PAGESIZE);
-      d->A = clCreateBuffer(d->context, CL_MEM_READ_ONLY, d->M*d->M*sizeof(float), NULL, &error);
-      assert(error == CL_SUCCESS);
-      error = posix_memalign((void **)&(d->A_buffer),page_size,d->M*d->M*sizeof(float));
-      assert(error==0);
+        size_t page_size = sysconf(_SC_PAGESIZE);
+        d->A = clCreateBuffer(d->context, CL_MEM_READ_ONLY, d->M * d->M * sizeof(float), NULL, &error);
+        assert(error == CL_SUCCESS);
+        error = posix_memalign((void **)&(d->A_buffer),page_size,d->M * d->M * sizeof(float));
+        assert(error == 0);
 
-      d->B = clCreateBuffer(d->context, CL_MEM_READ_ONLY, d->M*d->M*sizeof(float), NULL, &error);
-      assert(error == CL_SUCCESS);
-      error = posix_memalign((void **)&(d->B_buffer),page_size,d->M*d->M*sizeof(float));
-      assert(error==0);
+        d->B = clCreateBuffer(d->context, CL_MEM_READ_ONLY, d->M * d->M * sizeof(float), NULL, &error);
+        assert(error == CL_SUCCESS);
+        error = posix_memalign((void **)&(d->B_buffer),page_size,d->M * d->M * sizeof(float));
+        assert(error == 0);
 
-      d->C = clCreateBuffer(d->context, CL_MEM_READ_WRITE, d->M*d->M*sizeof(float), NULL, &error);
-      assert(error == CL_SUCCESS);
-      error = posix_memalign((void **)&(d->C_buffer),page_size,d->M*d->M*sizeof(float));
-      assert(error==0);
+        d->C = clCreateBuffer(d->context, CL_MEM_READ_WRITE, d->M * d->M * sizeof(float), NULL, &error);
+        assert(error == CL_SUCCESS);
+        error = posix_memalign((void **)&(d->C_buffer),page_size,d->M * d->M * sizeof(float));
+        assert(error == 0);
 
-      d->program = clCreateProgramWithSource(d->context, 1, (const char**)&opencl_sgemm_program,NULL,&error);
-      assert(error == CL_SUCCESS);
+        d->program = clCreateProgramWithSource(d->context, 1, (const char **)&opencl_sgemm_program,NULL,&error);
+        assert(error == CL_SUCCESS);
 
-      error = clBuildProgram(d->program,1,&(d->devices[d->device_id]),NULL,NULL,NULL);
-      if(error != CL_SUCCESS) {
-        char error_log[1024*1024];
-        error = clGetProgramBuildInfo(d->program,d->devices[d->device_id],CL_PROGRAM_BUILD_LOG,1024*1024,error_log,NULL);
-        char error_message[1024*1024];
-        snprintf(error_message, 1024*1024, "OpenCL kernel build failed with the following error:\n%s\n", error_log);
-        EmitLog(MyRank,9999, error_message, 0, PRINT_ALWAYS);
-        abort();
-      }
+        error = clBuildProgram(d->program,1,&(d->devices[d->device_id]),NULL,NULL,NULL);
+        if(error != CL_SUCCESS){
+            char error_log[1024 * 1024];
+            error = clGetProgramBuildInfo(d->program,d->devices[d->device_id],CL_PROGRAM_BUILD_LOG,1024 * 1024,error_log,NULL);
+            char error_message[1024 * 1024];
+            snprintf(error_message, 1024 * 1024, "OpenCL kernel build failed with the following error:\n%s\n", error_log);
+            EmitLog(MyRank,9999, error_message, 0, PRINT_ALWAYS);
+            abort();
+        }
 
-      d->kernel = clCreateKernel(d->program, "sgemm_sysburn", &error);
-      assert(error == CL_SUCCESS);
+        d->kernel = clCreateKernel(d->program, "sgemm_sysburn", &error);
+        assert(error == CL_SUCCESS);
     }
     return ERR_CLEAN;     // <- This indicates a clean run with no errors. Does not need to be changed.
 } /* initDOPENCLBLASPlan */
@@ -272,7 +279,7 @@ void *killSOPENCLBLASPlan(void *plan){   // <- Replace YOUR_NAME with the name o
     free((void *)(p->vptr));    // <- Freeing the used void pointer member of Plan. Do not change.
     free((void *)(plan));    // <- Freeing the used Plan pointer. Do not change.
     return (void *)NULL;    // <- Return statement to ensure nice exit from module.
-}
+} /* killSOPENCLBLASPlan */
 
 /************************
  * This is where the plan gets executed. Place all operations here.
@@ -308,9 +315,8 @@ int execSOPENCLBLASPlan(void *plan){  // <- Replace YOUR_NAME with the name of y
     int idx,jdx;
     cl_mem buffer;
 
-    for(jdx=0;jdx < local_data->loop_count; jdx++)
-    {
-      systemburn_openclblas_sgemm(local_data);
+    for(jdx = 0; jdx < local_data->loop_count; jdx++){
+        systemburn_openclblas_sgemm(local_data);
     }
     // --------------------------------------------
     // Plan is executed here...
@@ -359,16 +365,16 @@ int perfSOPENCLBLASPlan(void *plan){
     if(p->exec_count > 0){        // Ensures the plan has been executed at least once...
         // Assign appropriate plan-specific operation counts to the opcount[] array, such that the
         // indices correspond with the timers used in the exec function.
-      const unsigned long M = d->M;
-      const unsigned long M2 = M * M;
-      opcounts[TIMER0] = p->exec_count * 2 * M2 * (M + 1); //* YOUR_OPERATIONS_PER_EXECUTION;         // Where operations can be a function of the input size.
+        const unsigned long M = d->M;
+        const unsigned long M2 = M * M;
+        opcounts[TIMER0] = p->exec_count * 2 * M2 * (M + 1); //* YOUR_OPERATIONS_PER_EXECUTION;         // Where operations can be a function of the input size.
 
         perf_table_update(&p->timers, opcounts, p->name);          // Updates the global table with the performance data.
         #ifdef HAVE_PAPI
         PAPI_table_update(p->name, p->PAPI_Results, p->PAPI_Times, p->PAPI_Num_Events);
         #endif     //HAVE_PAPI
 
-        double flops =  ((double)opcounts[TIMER0] / perftimer_gettime(&p->timers, TIMER0)) / 1e6;       // Example for computing MFLOPS
+        double flops = ((double)opcounts[TIMER0] / perftimer_gettime(&p->timers, TIMER0)) / 1e6;        // Example for computing MFLOPS
         EmitLogfs(MyRank, 9999, "SOPENCLBLAS plan performance:", flops, "MFLOPS", PRINT_SOME);                   // Displays calculated performance when the '-v2' command line option is passed.
         EmitLog  (MyRank, 9999, "SOPENCLBLAS execution count :", p->exec_count, PRINT_SOME);
         ret = ERR_CLEAN;

@@ -53,13 +53,13 @@
   #include <plan_cudamem.h>
 #endif
 #ifdef HAVE_OPENCL
-#include <plan_openclmem.h>
-#include <plan_dopenclblas.h>
-#include <plan_sopenclblas.h>
+  #include <plan_openclmem.h>
+  #include <plan_dopenclblas.h>
+  #include <plan_sopenclblas.h>
 #endif
 #ifdef _OPENACC
-#include <plan_dopenaccgemm.h>
-#include <plan_sopenaccgemm.h>
+  #include <plan_dopenaccgemm.h>
+  #include <plan_sopenaccgemm.h>
 #endif
 
 #define MSG_SIZE 100
@@ -197,15 +197,15 @@ plan_info *plan_list[] = {
     &(CBA_info),
     &(TILT_info),
     &(ISORT_info),
-#ifdef HAVE_OPENCL
+    #ifdef HAVE_OPENCL
     &(OPENCL_MEM_info),
     &(DOPENCLBLAS_info),
     &(SOPENCLBLAS_info),
-#endif
-#ifdef _OPENACC
+    #endif
+    #ifdef _OPENACC
     &(DOPENACCGEMM_info),
     &(SOPENACCGEMM_info),
-#endif
+    #endif
     &(SLEEP_info)     // Default for unknown plans.
 };
   #endif // USED

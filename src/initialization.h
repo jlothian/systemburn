@@ -48,7 +48,7 @@ extern char temperature_path[ARRAY];
 // extern int comm_flag;
 
 /* Commandline and initialization functions. In initialization.c */
-extern int  initialize(int argc, char *argv[], char **log_file, char **config_file, char ***load_names);
+extern int initialize(int argc, char *argv[], char **log_file, char **config_file, char ***load_names);
 extern int setLogName(char *log, char **log_file, int log_flag);
 extern int setLoadNames(int num_loads, char ***load_names, int index, int argc, char **argv);
 extern int setCommLoad(int buflen);

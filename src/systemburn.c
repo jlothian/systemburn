@@ -230,12 +230,12 @@ int main(int argc, char **argv, char **envp){
             if((comm_flag != 0) && (CommPlan) && (CommPlan->fptr_execplan) && (CommPlan->vptr)){
                 iflag = (CommPlan->fptr_execplan)(CommPlan);                             // run an iteration of the comm plan if enabled
             } else {
-              gettimeofday(&CurrentTime, NULL);
-              if(nap + CurrentTime.tv_sec < StartTime.tv_sec + load_data.runtime) {
-                sleep(nap);
-              } else {
-                sleep((StartTime.tv_sec + load_data.runtime)-CurrentTime.tv_sec);
-              }
+                gettimeofday(&CurrentTime, NULL);
+                if(nap + CurrentTime.tv_sec < StartTime.tv_sec + load_data.runtime){
+                    sleep(nap);
+                } else {
+                    sleep((StartTime.tv_sec + load_data.runtime) - CurrentTime.tv_sec);
+                }
             }
             if(MyRank == ROOT){
                 gettimeofday(&CurrentTime, NULL);

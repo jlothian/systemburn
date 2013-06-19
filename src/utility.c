@@ -252,7 +252,7 @@ int readFile(char *buffer, int size, FILE *stream){
     buffer[ret + 1] = '\0';
 
     /* Return the number of bytes read. */
-    return ret+1;
+    return ret + 1;
 }
 
 /**

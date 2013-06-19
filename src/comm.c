@@ -548,7 +548,7 @@ int comm_broadcast_buffer_SHMEM(void *buffer, int buffer_size){
 
                 buff_index=0;
                 num_workers              = int_buffer[buff_index++];
-   *num_loads               = int_buffer[buff_index++];
+ * num_loads               = int_buffer[buff_index++];
                 thermal_panic            = int_buffer[buff_index++];
                 thermal_relaxation_time  = int_buffer[buff_index++];
                 monitor_frequency        = int_buffer[buff_index++];
@@ -559,12 +559,12 @@ int comm_broadcast_buffer_SHMEM(void *buffer, int buffer_size){
 
         shfree(buffer);
         buffer = NULL;
-   #endif
+ *#endif
         return;
    }
 
    void config_buffer_destroy_MPI(void *buffer, int buffer_size, int *num_loads) {
-   #ifndef HAVE_SHMEM
+ *#ifndef HAVE_SHMEM
         int buff_index = 0;
         char *char_buffer = (char *)buffer;
 
@@ -581,21 +581,21 @@ int comm_broadcast_buffer_SHMEM(void *buffer, int buffer_size){
 
         free(buffer);
         buffer = NULL;
-   #endif
+ *#endif
         return;
    }
 
    void config_buffer_destroy(void *buffer, int buffer_size, int *num_loads) {
-   #ifdef HAVE_SHMEM
+ *#ifdef HAVE_SHMEM
         config_buffer_destroy_SHMEM(buffer, buffer_size, num_loads);
-   #else
+ *#else
         config_buffer_destroy_MPI(buffer, buffer_size, num_loads);
-   #endif
+ *#endif
         return;
    }
 
    int bcastConfig_MPI(int load_num) {
-   #ifndef HAVE_SHMEM
+ *#ifndef HAVE_SHMEM
         char *buffer;
         int buff_sz = 0;
 
@@ -612,14 +612,14 @@ int comm_broadcast_buffer_SHMEM(void *buffer, int buffer_size){
         // All nonzero processes: receive broadcast and unpack from the buffer into global variables.
         config_buffer_destroy((void *)buffer, buff_sz, &load_num);
 
-   #endif
+ *#endif
 
         // Return the number of loads to be run.
         return load_num;
    }
 
    int bcastConfig_SHMEM(int load_num) {
-   #ifdef HAVE_SHMEM
+ *#ifdef HAVE_SHMEM
         int *buffer;
         int buff_sz = 0;
         int commsize;
@@ -644,7 +644,7 @@ int comm_broadcast_buffer_SHMEM(void *buffer, int buffer_size){
         shmem_barrier_all();
 
         // shfree(pSync);
-   #endif
+ *#endif
         return load_num;
    }
 
@@ -657,7 +657,7 @@ int comm_broadcast_buffer_SHMEM(void *buffer, int buffer_size){
                 buffer[b] = source[i];
         }
 
-   *buff_ind = b;
+ * buff_ind = b;
         return (b == buff_len) && (i < length * type_size);
    }
 
@@ -670,7 +670,7 @@ int comm_broadcast_buffer_SHMEM(void *buffer, int buffer_size){
                 destination[i] = buffer[b];
         }
 
-   *buff_ind = b;
+ * buff_ind = b;
         return (b == buff_len) && (i < length * type_size);
    }
 
@@ -713,7 +713,7 @@ int comm_broadcast_buffer_SHMEM(void *buffer, int buffer_size){
                 }
         }
 
-   *num_subloads = nsubloads;
+ * num_subloads = nsubloads;
         return buffer_size;
    }
 
@@ -723,7 +723,7 @@ int comm_broadcast_buffer_SHMEM(void *buffer, int buffer_size){
         int string_len, err = 0;
         SubLoad *subload_ptr = NULL;
         LoadPlan *plan_ptr = NULL;
-   #ifdef HAVE_SHMEM
+ *#ifdef HAVE_SHMEM
         char_buffer = (char *)shmalloc(buffer_size * sizeof(char));
         assert(char_buffer);
 
@@ -764,7 +764,7 @@ int comm_broadcast_buffer_SHMEM(void *buffer, int buffer_size){
                         EmitLog(MyRank, SCHEDULER_THREAD, "Overran the buffer while packing the load structure.", -1, PRINT_ALWAYS);
                 }
         }
-   #endif
+ *#endif
         return (void *)char_buffer;
    }
 
@@ -774,7 +774,7 @@ int comm_broadcast_buffer_SHMEM(void *buffer, int buffer_size){
         int i, string_len;
         SubLoad *subload_ptr = NULL;
         LoadPlan *plan_ptr = NULL;
-   #ifndef HAVE_SHMEM
+ *#ifndef HAVE_SHMEM
 
         char_buffer = (char *)malloc(buffer_size * sizeof(char));
         assert(char_buffer);
@@ -814,16 +814,16 @@ int comm_broadcast_buffer_SHMEM(void *buffer, int buffer_size){
                 }
         }
 
-   #endif
+ *#endif
         return (void *)char_buffer;
    }
 
    void *load_buffer_create(Load *load, int num_subloads, int buffer_size) {
-   #ifdef HAVE_SHMEM
+ *#ifdef HAVE_SHMEM
         return load_buffer_create_SHMEM(load, num_subloads, buffer_size);
-   #else
+ *#else
         return load_buffer_create_MPI(load, num_subloads, buffer_size);
-   #endif
+ *#endif
    }
 
    int load_buffer_destroy_SHMEM(void *buffer, int buffer_size, Load *load) {
@@ -834,7 +834,7 @@ int comm_broadcast_buffer_SHMEM(void *buffer, int buffer_size){
         SubLoad *subload_ptr = NULL;
         LoadPlan *plan_ptr = NULL;
         int nsubloads;
-   #ifdef HAVE_SHMEM
+ *#ifdef HAVE_SHMEM
         if (MyRank != ROOT) {
                 buffer_unpack(char_buffer, buffer_size, &buff_index, &(load->num_threads), SINGLE, sizeof(int));
                 buffer_unpack(char_buffer, buffer_size, &buff_index, &(load->num_cpusets), SINGLE, sizeof(int));
@@ -915,7 +915,7 @@ int comm_broadcast_buffer_SHMEM(void *buffer, int buffer_size){
         }
         shfree(buffer);
         buffer = NULL;
-   #endif
+ *#endif
         return alloc_err;
    }
 
@@ -928,7 +928,7 @@ int comm_broadcast_buffer_SHMEM(void *buffer, int buffer_size){
         int string_len;
         int alloc_err = GOOD;
         char *char_buffer = (char *)buffer;
-   #ifndef HAVE_SHMEM
+ *#ifndef HAVE_SHMEM
 
         if (MyRank != ROOT) {
                 // Unpack the buffer into a newly allocated Load structure.
@@ -1017,16 +1017,16 @@ int comm_broadcast_buffer_SHMEM(void *buffer, int buffer_size){
 
         free(buffer);
         buffer = NULL;
-   #endif
+ *#endif
         return alloc_err;
    }
 
    int load_buffer_destroy(void *buffer, int buffer_size, Load *load) {
-   #ifdef HAVE_SHMEM
+ *#ifdef HAVE_SHMEM
         return load_buffer_destroy_SHMEM(buffer, buffer_size, load);
-   #else
+ *#else
         return load_buffer_destroy_MPI(buffer, buffer_size, load);
-   #endif
+ *#endif
    }
 
    int bcastLoad_MPI(Load *load) {
@@ -1035,7 +1035,7 @@ int comm_broadcast_buffer_SHMEM(void *buffer, int buffer_size){
         int flag = 0;
         int alloc_err = GOOD;
         int nsubloads = 0;
-   #ifndef HAVE_SHMEM
+ *#ifndef HAVE_SHMEM
 
         buffer_size = load_buffer_size(load, &nsubloads);
 
@@ -1049,7 +1049,7 @@ int comm_broadcast_buffer_SHMEM(void *buffer, int buffer_size){
 
         alloc_err = load_buffer_destroy((void *)buffer, buffer_size, load);
 
-   #endif
+ *#endif
         return (flag && alloc_err);
    }
 
@@ -1061,7 +1061,7 @@ int comm_broadcast_buffer_SHMEM(void *buffer, int buffer_size){
         // long *pSync;
         int i;
         int commsize;
-   #ifdef HAVE_SHMEM
+ *#ifdef HAVE_SHMEM
 
         // pSync = (long *)shmalloc(_SHMEM_BCAST_SYNC_SIZE * sizeof(long));   // hinky
         // assert(pSync);
@@ -1077,7 +1077,7 @@ int comm_broadcast_buffer_SHMEM(void *buffer, int buffer_size){
         shmem_broadcast32(buffer, buffer, buffer_size, ROOT, 0, 0, commsize, qSync);
         shmem_barrier_all();
         alloc_err = load_buffer_destroy((void *)buffer, buffer_size, load);
-   #endif
+ *#endif
         return alloc_err;
    }
  */

@@ -257,20 +257,20 @@ int execDCUBLASPlan(void *plan){
         cublasDgemm('N', 'N', M, N, K, alpha, DA, lda, DB, ldb, beta, DC, ldc);
     }
 
-        if(DO_PERF){
-            ORB_read(t2);
-            #ifdef HAVE_PAPI
-            end = PAPI_get_real_usec();             //PAPI time
+    if(DO_PERF){
+        ORB_read(t2);
+        #ifdef HAVE_PAPI
+        end = PAPI_get_real_usec();                 //PAPI time
 
-            /* Collect PAPI counters and store time elapsed */
-            TEST_PAPI(PAPI_accum(p->PAPI_EventSet, p->PAPI_Results), PAPI_OK, MyRank, 9999, PRINT_SOME);
-            for(k = 0; k < p->PAPI_Num_Events && k < TOTAL_PAPI_EVENTS; k++){
-                p->PAPI_Times[k] += (end - start);
-            }
-            #endif //HAVE_PAPI
+        /* Collect PAPI counters and store time elapsed */
+        TEST_PAPI(PAPI_accum(p->PAPI_EventSet, p->PAPI_Results), PAPI_OK, MyRank, 9999, PRINT_SOME);
+        for(k = 0; k < p->PAPI_Num_Events && k < TOTAL_PAPI_EVENTS; k++){
+            p->PAPI_Times[k] += (end - start);
+        }
+        #endif     //HAVE_PAPI
 
-            perftimer_accumulate(&p->timers, TIMER0, ORB_cycles_a(t2, t1));
-        }         //DO_PERF
+        perftimer_accumulate(&p->timers, TIMER0, ORB_cycles_a(t2, t1));
+    }             //DO_PERF
 
 // DeviceToHost is async wrt the device kernels
 // try uncommenting:
@@ -287,8 +287,8 @@ int execDCUBLASPlan(void *plan){
 //		}
 //		if (maxerr > 1.0e-6) printf("GPU CHECK: MaxError = %f\n", maxerr);
 //	}
-return ERR_CLEAN;
-}
+    return ERR_CLEAN;
+} /* execDCUBLASPlan */
 
 /**
  * \brief Calculates (and optionally displays) performance data for the plan.
