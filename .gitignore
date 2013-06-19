@@ -11,3 +11,13 @@ systemburn
 *~
 .DS_Store
 \#*
+*.aux
+*.bbl
+*.blg
+*.lof
+*.log
+*.lot
+*.out
+SYSTEMBURN_wp.pdf
+*.toc
+
