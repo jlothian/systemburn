@@ -103,7 +103,12 @@ def main():
 
     (options, args) = parser.parse_args()
 
-    print args 
+#    print args 
+
+    if not options.cmnd:
+        print "Error: -c flag must be specified"
+        parser.print_help()
+        sys.exit(1)
 
     cmnd = options.cmnd
     l2_cachesize = options.l2_cachesize
@@ -120,7 +125,7 @@ def main():
         s.name = fname
         loads[fname] = s
 
-    print loads 
+#    print loads 
 
     for l in loads:
         load = loads[l]

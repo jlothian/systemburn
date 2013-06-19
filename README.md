@@ -20,3 +20,13 @@ Installation
     make
     make install
 
+Running SystemBurn
+==================
+
+For detailed information, see docs/SYSTEMBURN_wp.pdf
+
+If you wish to run various scenarios and compare their power utilization,
+you can use scripts/harness.py.  harness.py must be called with the
+-c flag.  The argument to -c should be an executable (a script of
+compiled binary) that returns a number value representing some metric,
+generally power or temperature, to compare between the different loads.
