@@ -4,13 +4,15 @@
  *
  * System operational power and thermal envelope test
  *
- * Copyright (c) 2008, 2009, 2010, 2011, 2012 UT-Battelle, LLC.
+ * Copyright (c) 2008-2013 UT-Battelle, LLC.
  *
  * All Rights Reserved. See the file 'LICENSING' for the
  * License Agreement.
  *
  * Authors: Jeffery A. Kuehn, kuehn@ornl.gov
  *          Josh Lothian,     lothian@ornl.gov
+ *          Jonathan Schrock, shrockj@ornl.gov
+ *          Matthew Baker,    bakermb@ornl.gov
  *          Jonathan Dobson,  dobsonjd@ornl.gov
  *          Ross Glandon,     glandonsr@ornl.gov
  *          Nick Lewkow,      lewkownnr@ornl.gov
